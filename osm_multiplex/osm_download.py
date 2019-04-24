@@ -5,6 +5,7 @@
 # third-party libraries
 import osmnx as ox
 import networkx as nx
+import copy
 
 def download_osm_layer(area, mode):
 	"""Download a single-mode layer from OSM
