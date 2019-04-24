@@ -2,6 +2,7 @@
 .. moduleauthor:: Sylvan Hoover <hooversy@oregonstate.edu>
 """
 
+# third-party libraries
 import osmnx as ox
 import networkx as nx
 
@@ -71,3 +72,20 @@ def merge_multiplex_nodes(multiplex_separated):
 	multiplex_connected : networkx multidigraph
 		Multiplex network with co-located nodes connected
 	"""
+
+	node_list = list(multiplex_separated.nodes)
+	node_list_all = copy.deepcopy(node_list)
+	for node in node_list:
+		re.sub('^.*?-', '', node)
+	node_set = set(node_list) # returns set of distinct OSM node id
+
+	for node in node_set:
+		colocated_nodes = [mode_node for mode_node in node_list_all if node in mode_node]
+		for start_node in colocated_nodes:
+			for end_node in colocated_nodes:
+				multiplex_separated.add_edge(start_node, end_node)
+			multiplex_separated.remove_edge(start_node, start_node)
+
+	multiplex_connected = multiplex_separated # only after above loop added the necessary edges
+
+	return multiplex_connected
