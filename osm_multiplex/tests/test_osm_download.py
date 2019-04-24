@@ -56,7 +56,7 @@ class TestGenerateMultiplex:
 
 		assert isinstance(test_multiplex, networkx.classes.multidigraph.MultiDiGraph) == True
 
-class TestMergeMultiplexNodes
+class TestMergeMultiplexNodes:
 	"""
 	Tests if colocated nodes have edges connecting them
 	"""
