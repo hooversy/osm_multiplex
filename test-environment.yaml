@@ -1,8 +1,9 @@
 name: test-environment
 channels:
 - conda-forge
+- defaults
 dependencies:
-  - python>=3.6
+  - python=${PYTHON}
   - pytest>=3.2.0
   - pytest-cov
   - networkx
