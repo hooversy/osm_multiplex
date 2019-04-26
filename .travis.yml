@@ -2,7 +2,7 @@ language: generic
 
 matrix:
   include:
-    - os: osx
+    - os: linux
       env: PYTHON="3.6"
 
 install:

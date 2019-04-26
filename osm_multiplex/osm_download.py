@@ -6,6 +6,7 @@
 import osmnx as ox
 import networkx as nx
 import copy
+import re
 
 def download_osm_layer(area, mode):
 	"""Download a single-mode layer from OSM
@@ -50,7 +51,7 @@ def generate_multiplex(area, modes):
 		Multiplex graph of merged OSM layers for all specified modes
 	"""
 
-	multiplex = nx.Graph()
+	multiplex = nx.MultiDiGraph()
 
 	for mode in modes:
 		layer = download_osm_layer(area, mode)
@@ -76,9 +77,10 @@ def merge_multiplex_nodes(multiplex_separated):
 
 	node_list = list(multiplex_separated.nodes)
 	node_list_all = copy.deepcopy(node_list)
+	node_num = []
 	for node in node_list:
-		re.sub('^.*?-', '', node)
-	node_set = set(node_list) # returns set of distinct OSM node id
+		node_num.append(re.sub('^.*?-', '', node))
+	node_set = set(node_num) # returns set of distinct OSM node id
 
 	for node in node_set:
 		colocated_nodes = [mode_node for mode_node in node_list_all if node in mode_node]

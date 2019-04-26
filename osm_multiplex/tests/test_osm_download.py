@@ -12,12 +12,12 @@ class TestDownloadOsmLayer:
 		"""
 		Check if location 'Corvallis, Oregon' for mode 'walk' will successfully download
 		"""
-		test_area = 'Corvalls, Oregon'
+		test_area = 'Corvallis, Oregon'
 		test_mode = 'walk'
 
 		test_layer = osm_download.download_osm_layer(test_area, test_mode)
 
-		assert isinstance(test_layer, networkx.classes.multidigraph.MultiDiGraph) == True
+		assert isinstance(test_layer, nx.classes.multidigraph.MultiDiGraph) == True
 
 	def test_bbox_download(self):
 		"""
@@ -28,7 +28,7 @@ class TestDownloadOsmLayer:
 
 		test_layer = osm_download.download_osm_layer(test_area, test_mode)
 
-		assert isinstance(test_layer, networkx.classes.multidigraph.MultiDiGraph) == True
+		assert isinstance(test_layer, nx.classes.multidigraph.MultiDiGraph) == True
 
 class TestGenerateMultiplex:
 	"""
@@ -43,7 +43,7 @@ class TestGenerateMultiplex:
 
 		test_multiplex = osm_download.generate_multiplex(test_area, test_modes)
 
-		assert isinstance(test_multiplex, networkx.classes.multidigraph.MultiDiGraph) == True
+		assert isinstance(test_multiplex, nx.classes.multidigraph.MultiDiGraph) == True
 
 	def test_bbox_multiplex(self):
 		"""
@@ -54,7 +54,7 @@ class TestGenerateMultiplex:
 
 		test_multiplex = osm_download.generate_multiplex(test_area, test_modes)
 
-		assert isinstance(test_multiplex, networkx.classes.multidigraph.MultiDiGraph) == True
+		assert isinstance(test_multiplex, nx.classes.multidigraph.MultiDiGraph) == True
 
 class TestMergeMultiplexNodes:
 	"""
@@ -70,4 +70,6 @@ class TestMergeMultiplexNodes:
 
 		connected_edges = list(connected_graph.edges)
 		assert ('A-1', 'B-1', 0) in connected_edges
+		assert ('B-1', 'A-1', 0) in connected_edges
 		assert ('A-2', 'B-2', 0) in connected_edges
+		assert ('B-2', 'A-2', 0) in connected_edges
