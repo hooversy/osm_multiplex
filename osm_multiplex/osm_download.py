@@ -27,7 +27,7 @@ def download_osm_layer(area, mode):
 
 	if isinstance(area, str):
 		layer = ox.graph_from_place(area, network_type=mode)
-	elif isinstance(area, list):
+	elif isinstance(area, list) and len(area) == 4:
 		layer = ox.graph_from_bbox(area[0], area[1], area[2], area[3], network_type=mode)
 	else:
 		raise Exception('Graph area not geocoded place nor bounding box')
