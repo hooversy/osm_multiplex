@@ -6,27 +6,30 @@ matrix:
       env: PYTHON="3.6"
 
 install:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-      elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
-      fi
-    - bash miniconda.sh -b -p $HOME/miniconda
-    - export PATH="$HOME/miniconda/bin:$PATH"
-    - hash -r
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    - conda config --append channels conda-forge
-    - if [[ -z "$TRAVIS_TAG" ]]; then
-        sed -i -e "s/\${PYTHON}/"${PYTHON}"/" test-environment.yaml;
-        conda env create -qf test-environment.yaml;
-        source activate test-environment;
-      else
-        conda install -q conda-build anaconda-client;
-      fi
-      # Useful for debugging any issues with conda
-    - conda info -a
-    - conda list
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda config --append channels conda-forge
+  - if [[ -z "$TRAVIS_TAG" ]]; then
+      sed -i -e "s/\${PYTHON}/"${PYTHON}"/" test-environment.yaml;
+      conda env create -qf test-environment.yaml;
+      source activate test-environment;
+    else
+      conda install -q conda-build anaconda-client;
+    fi
+    # Useful for debugging any issues with conda
+  - conda info -a
+  - conda list
 
 script:
-    - pytest -vv --cov=./;
+  - pytest -vv --cov=./;
+
+after_success:
+  - coveralls
