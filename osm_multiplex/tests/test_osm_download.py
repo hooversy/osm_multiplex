@@ -1,5 +1,6 @@
 # third-party libraries
 import networkx as nx
+import pytest
 
 # local imports
 from .. import osm_download
@@ -29,6 +30,16 @@ class TestDownloadOsmLayer:
 		test_layer = osm_download.download_osm_layer(test_area, test_mode)
 
 		assert isinstance(test_layer, nx.classes.multidigraph.MultiDiGraph) == True
+
+	def test_bad_area_download(self):
+		"""
+		Check if exception is raised when neither a string for a geocoded location nor a bbox is entered
+		"""
+
+		test_area = [44.6]
+		test_mode = 'drive'
+		with pytest.raises(Exception):
+			osm_download.download_osm_layer(test_area, test_mode)
 
 class TestGenerateMultiplex:
 	"""
