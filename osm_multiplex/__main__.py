@@ -38,7 +38,7 @@ parser.add_argument('-fd', '--first-data',
                     help='First dataset (e.g., bus.csv).'
 					)
 
-parser.add_argument('fm', '--first-mode',
+parser.add_argument('-fm', '--first-mode',
 					type=str,
                     required=False,
                     dest='mode1',
@@ -52,7 +52,7 @@ parser.add_argument('-sd', '--second-data',
                     help='Second dataset (e.g., bike.csv).'
 					)
 
-parser.add_argument('sm', '--second-mode',
+parser.add_argument('-sm', '--second-mode',
 					type=str,
                     required=False,
                     dest='mode2',
