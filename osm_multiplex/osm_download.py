@@ -8,6 +8,33 @@ import networkx as nx
 import copy
 import re
 
+def generate_multiplex(area, modes):
+	"""Create multiplex transportation network graph from OSM
+
+	Parameters
+	----------
+	area : string or list
+		String of geocoded place or list of [north, south, east, west]
+
+	modes : list
+		Modes included in multiplex graph
+
+	Returns
+	-------
+	multiplex : networkx multidigraph
+		Multiplex graph of merged OSM layers for all specified modes
+	"""
+
+	separated_multiplex = nx.MultiDiGraph()
+
+	for mode in modes:
+		layer = download_osm_layer(area, mode)
+		separated_multiplex = nx.union(layer, separated_multiplex, rename=(mode, None))
+
+	multiplex = merge_multiplex_nodes(separated_multiplex)
+
+	return multiplex
+
 def download_osm_layer(area, mode):
 	"""Download a single-mode layer from OSM
 
@@ -33,31 +60,6 @@ def download_osm_layer(area, mode):
 		raise Exception('Graph area not geocoded place nor bounding box')
 
 	return layer
-
-def generate_multiplex(area, modes):
-	"""Create multiplex transportation network graph from OSM
-
-	Parameters
-	----------
-	area : string or list
-		String of geocoded place or list of [north, south, east, west]
-
-	modes : list
-		Modes included in multiplex graph
-
-	Returns
-	-------
-	multiplex : networkx multidigraph
-		Multiplex graph of merged OSM layers for all specified modes
-	"""
-
-	multiplex = nx.MultiDiGraph()
-
-	for mode in modes:
-		layer = download_osm_layer(area, mode)
-		multiplex = nx.union(layer, multiplex, rename=(mode, None))
-
-	return multiplex
 
 def merge_multiplex_nodes(multiplex_separated):
 	"""In the multiplex graph, each mode has its own layer of nodes and edges. Nodes are
