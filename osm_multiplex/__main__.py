@@ -23,8 +23,8 @@ parser.add_argument('-a', '--graph-modes',
 					)
 
 parser.add_argument('-ad', '--anomaly-detect',
-					dest = 'anomaly_detect'
-                    action ='store_true',
+					dest = 'anomaly_detect',
+                    action = 'store_true',
                     required = False,
                     help ='Run mode counts anomaly detection'
                     )
