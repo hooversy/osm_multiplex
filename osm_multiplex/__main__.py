@@ -2,7 +2,9 @@ from argparse import ArgumentParser
 
 from osm_download import generate_multiplex
 
-parser = ArgumentParser(description='')
+parser = ArgumentParser(description='Utility for multiplex graph generation '
+									'and anomaly detection for collected counts.'
+						)
 
 parser.add_argument('-g', '--graph',
                     action='store_true',
