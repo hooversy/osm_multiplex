@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from osm_download import generate_multiplex
+from .osm_download import generate_multiplex
 
 parser = ArgumentParser(description='Utility for multiplex graph generation '
 									'and anomaly detection for collected counts.'
