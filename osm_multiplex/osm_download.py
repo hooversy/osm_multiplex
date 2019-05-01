@@ -2,11 +2,13 @@
 .. moduleauthor:: Sylvan Hoover <hooversy@oregonstate.edu>
 """
 
+# standard libraries
+import copy
+import re
+
 # third-party libraries
 import osmnx as ox
 import networkx as nx
-import copy
-import re
 
 def generate_multiplex(area, modes):
 	"""Create multiplex transportation network graph from OSM
