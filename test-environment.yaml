@@ -8,6 +8,6 @@ dependencies:
   - pytest-cov
   - networkx
   - osmnx
-  - tables
+  - pytables
   - pandas
   - coveralls
