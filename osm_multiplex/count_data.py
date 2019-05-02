@@ -6,7 +6,7 @@
 
 import pandas as pd
 
-def csv_to_df(data, element_id, timestamp=None, session_start=None, session_end=None, lat, lon):
+def csv_to_df(data, element_id=None, timestamp=None, session_start=None, session_end=None, lat=None, lon=None):
 	"""Imports counter data as csv and creates pandas dataframe
 
 	Parameters
