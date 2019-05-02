@@ -44,7 +44,7 @@ def csv_to_df(data, element_id, timestamp=None, session_start=None, session_end=
 		df_fixed_headers = df_selected_columns.rename(index=str, 
 			columns={element_id: "element_id", timestamp: "timestamp", lat: "lat", lon: "lon"})
 	else:
-		df = pd.read_csv(data, parse_dates=[session_start, session_end], infer_datetime_format=True)
+		df_imported_headers = pd.read_csv(data, parse_dates=[session_start, session_end], infer_datetime_format=True)
 		df_selected_columns = df_imported_headers[[element_id, session_start, session_end, lat, lon]].copy()
 		df_fixed_headers = df_selected_columns.rename(index=str, 
 			columns={element_id: "element_id", session_start: "session_start", session_end: "session_end", lat: "lat", lon: "lon"})
