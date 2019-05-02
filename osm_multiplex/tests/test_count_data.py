@@ -18,7 +18,7 @@ class TestCsvToDf:
 
 		test_df = count_data.csv_to_df(data, element_id, timestamp, lat, lon)
 
-		assert pd.util.hash_pandas_object(test_df).sum() = -6761865716520410554
+		assert pd.util.hash_pandas_object(test_df).sum() == -6761865716520410554
 
 	def test_session(self):
 		"""
@@ -33,4 +33,4 @@ class TestCsvToDf:
 
 		test_df = count_data.csv_to_df(data, element_id, session_start, session_end, lat, lon)
 
-		assert pd.util.hash_pandas_object(test_df).sum() = 7098407329788286247
+		assert pd.util.hash_pandas_object(test_df).sum() == 7098407329788286247
