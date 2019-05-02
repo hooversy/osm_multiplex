@@ -15,7 +15,7 @@ def generate_multiplex(area, modes):
 
 	Parameters
 	----------
-	area : string or list
+	area : str or list
 		String of geocoded place or list of [north, south, east, west]
 
 	modes : list
@@ -42,10 +42,10 @@ def download_osm_layer(area, mode):
 
 	Parameters
 	----------
-	area : string or list 
+	area : str or list 
 		String of geocoded place or list of [north, south, east, west]
 		
-	mode : string
+	mode : str
 		Mode choice of  {‘walk’, ‘bike’, ‘drive’, ‘drive_service’, ‘all’, ‘all_private’, ‘none’}
 
 	Returns
