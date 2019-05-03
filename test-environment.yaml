@@ -6,8 +6,9 @@ dependencies:
   - python=${PYTHON}
   - pytest>=3.2.0
   - pytest-cov
+  - coveralls
   - networkx
+  - numpy
   - osmnx
   - pytables
   - pandas
-  - coveralls
