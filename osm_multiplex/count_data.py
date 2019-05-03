@@ -50,3 +50,35 @@ def csv_to_df(data, element_id=None, timestamp=None, session_start=None, session
 			columns={element_id: "element_id", session_start: "session_start", session_end: "session_end", lat: "lat", lon: "lon"})
 
 	return df_fixed_headers
+
+def standardize_timestamp(dataframe):
+	"""Converts epoch times to datetime format. The import of the csv infers datetime format except in the
+	case of epoch times. If epoch times are present, this converts them to datetime.
+
+	Parameters
+	----------
+	dataframe : pandas DataFrame
+		DataFrame of the imported csv potentially with epoch times
+	
+	Returns
+	-------
+	dataframe : pandas DataFrame
+		DataFrame with all times now datetime format
+	"""
+	try:
+		if dataframe['timestamp'].dtype != 'datetime64[ns]':
+			dataframe['timestamp'] = pd.to_datetime(dataframe['timestamp'],unit='s')
+	except:
+		pass
+	try:
+		if dataframe['session_start'].dtype != 'datetime64[ns]' or dataframe['session_end'].dtype != 'datetime64[ns]':
+			dataframe['session_start'] = pd.to_datetime(dataframe['session_start'],unit='s')
+			dataframe['session_end'] = pd.to_datetime(dataframe['session_end'],unit='s')
+	except:
+		pass
+
+	return dataframe
+
+#def npmi(data1, data2):
+
+	
