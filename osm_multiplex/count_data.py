@@ -2,9 +2,6 @@
 .. moduleauthor:: Sylvan Hoover <hooversy@oregonstate.edu>
 """
 
-# standard libraries
-import math
-
 # third-party libraries
 
 import numpy as np
@@ -215,12 +212,10 @@ def haversine_dist_filter(dataframe, dist_max):
 	"""
 	radius = 6378137 # meters
 
-	dataframe['dlat'] = math.radians(dataframe['lat2']-dataframe['lat1'])
-	dataframe['dlon'] = math.radians(dataframe['lon2']-dataframe['lon1'])
-	dataframe['a'] = math.sin(dataframe['dlat']/2) * math.sin(dataframe['dlat']/2), \
-	+ math.cos(math.radians(dataframe['lat1'])) * math.cos(math.radians(dataframe['lat2'])), \
-	* math.sin(dataframe['dlon']/2) * math.sin(dataframe['dlon']/2)
-	dataframe['c'] = 2 * math.atan2(math.sqrt(dataframe['a']), math.sqrt(1-dataframe['a']))
+	dataframe['dlat'] = np.radians(dataframe['lat2']-dataframe['lat1'])
+	dataframe['dlon'] = np.radians(dataframe['lon2']-dataframe['lon1'])
+	dataframe['a'] = np.sin(dataframe['dlat']/2)**2 + np.cos(np.radians(dataframe['lat1'])) * np.cos(np.radians(dataframe['lat2'])) * np.sin(dataframe['dlon']/2)**2
+	dataframe['c'] = 2 * np.arcsin(np.sqrt(dataframe['a']))
 	dataframe['dist'] = radius * dataframe['c']
 
 	close_distance = dataframe['dist'] <= dist_max

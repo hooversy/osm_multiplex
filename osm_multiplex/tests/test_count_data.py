@@ -197,3 +197,18 @@ class TestTimeRangeJoin:
 
 		# taking hash approach because value dtypes are different so `equals` returns false
 		assert pd.util.hash_pandas_object(target).sum() == pd.util.hash_pandas_object(df_range_join).sum()
+
+class TestHaversineDistFilter:
+	"""
+	Tests filtering using haversine distance
+	"""
+	def test_distance_filter(self):
+		dist_max = 3000
+		test_locations = [[44.49, -123.51, 44.51, -123.49], [44.0, -123.0, 43.0, -124.0]]
+		target_list = [[44.49, -123.51, 44.51, -123.49]]
+		dataframe = pd.DataFrame(test_locations, columns=['lat1', 'lon1', 'lat2', 'lon2'])
+		target = pd.DataFrame(target_list, columns=['lat1', 'lon1', 'lat2', 'lon2'])
+
+		filtered_df = count_data.haversine_dist_filter(dataframe, dist_max)
+
+		assert filtered_df.equals(target)
