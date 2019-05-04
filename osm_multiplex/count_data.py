@@ -223,9 +223,8 @@ def haversine_dist_filter(dataframe, dist_max):
 	dataframe['c'] = 2 * math.atan2(math.sqrt(dataframe['a']), math.sqrt(1-dataframe['a']))
 	dataframe['dist'] = radius * dataframe['c']
 
-	df_dist = dataframe['dist'] <= dist_max
-
-	df_dist.drop(columns=['dlat', 'dlon', 'a', 'c', 'dist'])
+	close_distance = dataframe['dist'] <= dist_max
+	df_dist = dataframe[close_distance].drop(columns=['dlat', 'dlon', 'a', 'c', 'dist']).reset_index(drop=True)
 
 	return df_dist
 
