@@ -187,10 +187,12 @@ def time_range_join(data1, data2, time_range):
 	d2_time_low = d2_time - time_range
 
 	i, j = np.where((d1_time[:, None] >= d2_time_low) & (d1_time[:, None] <= d2_time_high))
-	df_range_join = pd.DataFrame(
+	df_range_join_objects = pd.DataFrame(
 						np.column_stack([data1.values[i], data2.values[j]]),
 						columns=data1.columns.append(data2.columns)
 						)
+
+	df_range_join = df_range_join_objects.infer_objects()
 
 	return df_range_join
 
@@ -256,13 +258,15 @@ def pairwise_filter(data1, data2, session_limit=600, detection_distance=100, det
 	data2_session_filter = session_length_filter(data2_epoch, session_limit)
 	
 	# appends column names to distinguish between the two datasets
-	data1_session_filter.add_suffix('1')
-	data2_session_filter.add_suffix('2')
+	data1_suffix = data1_session_filter.add_suffix('1')
+	data2_suffix = data2_session_filter.add_suffix('2')
 
 	# range join includes filtering for time proximity of recorded event
-	df_range_join = time_range_join(data1_session_filter, data2_session_filter, detection_time)
+	df_range_join = time_range_join(data1_suffix, data2_suffix, detection_time)
 
-	df_distance_filter = haversine_dist_filter(df_range_join, detection_distance)
+	candidate_pairs = haversine_dist_filter(df_range_join, detection_distance)
+
+	return candidate_pairs
 
 def npmi(dataframe):
 	"""Takes a dataset with identifiers and calculates the Normalize Pointwise Mutual Information value

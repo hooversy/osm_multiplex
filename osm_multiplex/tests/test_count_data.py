@@ -175,8 +175,7 @@ class TestTimeRangeJoin:
 
 		df_range_join = count_data.time_range_join(data1, data2, time_range)
 
-		# taking hash approach because value dtypes are different so `equals` returns false
-		assert pd.util.hash_pandas_object(target).sum() == pd.util.hash_pandas_object(df_range_join).sum()
+		assert df_range_join.equals(target)
 
 	def test_d1session_d2timestame(self):
 		"""
@@ -212,3 +211,22 @@ class TestHaversineDistFilter:
 		filtered_df = count_data.haversine_dist_filter(dataframe, dist_max)
 
 		assert filtered_df.equals(target)
+
+class TestPairwiseFilter:
+	"""
+	Tests the creation of candidate pairs of identifiers based on spatiotemporal filters
+	"""
+	def test_pairwise_filter(self):
+		data1_list = [['bob1', 1519330050, 44.4999, -123.5001], ['bob1', 1519330080, 44.5001, -123.4999], ['sue1', 1519330150, 43.0, -124.0]]
+		data2_list = [['bob2', 1519330040, 1519330070, 44.50, -123.50], ['jake2', 1519333150, 1519333320, 44.0, -123.0]]
+		target_list = [['bob1', 1519330050, 44.4999, -123.5001, 'bob2', 1519330040, 1519330070, 44.50, -123.50],
+					   ['bob1', 1519330080, 44.5001, -123.4999, 'bob2', 1519330040, 1519330070, 44.50, -123.50]]
+
+		data1 = pd.DataFrame(data1_list, columns=['element_id', 'timestamp', 'lat', 'lon'])
+		data2 = pd.DataFrame(data2_list, columns=['element_id', 'session_start', 'session_end', 'lat', 'lon'])
+		target = pd.DataFrame(target_list, columns=['element_id1', 'timestamp1', 'lat1', 'lon1',
+												    'element_id2', 'session_start2', 'session_end2', 'lat2', 'lon2'])
+
+		paired_records = count_data.pairwise_filter(data1, data2)
+
+		assert paired_records.equals(target)
