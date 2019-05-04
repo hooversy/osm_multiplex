@@ -2,6 +2,9 @@
 .. moduleauthor:: Sylvan Hoover <hooversy@oregonstate.edu>
 """
 
+# standard libraries
+import math
+
 # third-party libraries
 
 import numpy as np
@@ -128,6 +131,104 @@ def standardize_epoch(dataframe):
 
 	return dataframe
 
+def session_length_filter(dataframe, session_max):
+	"""If dataset has start and stop times for a session, filters out sessions exceeding max defined length
+	
+	Parameters
+	----------
+	dataframe : pandas DataFrame
+		DataFrame of all the records including single timestamp and session duration
+
+	session_max : int
+		The max length of a session in seconds to be included as a mobility candidate session
+	
+	Returns
+	-------
+	filtered_dataframe : pandas DataFrame
+		DataFrame with all the records with a single timestamp and those with sessions shorter than defined
+		by `session_max`
+	"""
+	try:
+		dataframe['session_length'] = dataframe['session_end'] - dataframe['session_start']
+		filtered_dataframe = dataframe['session_length'] <= session_max
+		filtered_dataframe.drop(columns=['session_length'])
+	except:
+		filtered_dataframe = dataframe
+
+	return filtered_dataframe
+
+def time_range_join(data1, data2, time_range):
+	"""Performs a range join based on indicated time plus/minus `time_range` buffer
+
+	Parameters
+	----------
+	data1 : pandas DataFrame
+		DataFrame of the first dataset
+
+	data2 : pandas DataFrame
+		DataFrame of the second dataset
+
+	time_range : int
+		Value for time buffer indicating range in join
+	
+	Returns
+	-------
+	df_range_join : pandas DataFrame
+		DataFrame with a range join of the two datasets based on time
+	"""
+	try:
+		d1_time = data1.timestamp1.values
+	except:
+		d1_time = data1.session_start1.values
+
+	try:
+		d2_time = data2.timestamp2.values
+	except:
+		d2_time = data2.session_start2.values
+
+	d2_time_high = d2_time + time_range
+	d2_time_low = d2_time - time_range
+
+	i, j = np.where((d1_time[:, None] >= d2_time_low) & (d1_time[:, None] <= d2_time_high))
+	df_range_join = pd.DataFrame(
+						np.column_stack([data1.values[i], data2.values[j]]),
+						columns=data1.columns.append(data2.columns)
+						)
+
+	return df_range_join
+
+def haversine_dist_filter(dataframe, dist_max):
+	"""Returns dataframe with filtered for distance between recorded points using haversine distance
+
+	Parameters
+	----------
+	dataframe : pandas DataFrame
+		DataFrame of the recorded candidate pairs
+
+	dist_max : int
+		Maximum distance between records
+	
+	Returns
+	-------
+	df_dist : pandas DataFrame
+		DataFrame filtered for only records within defined distance
+	"""
+	radius = 6378137 # meters
+
+	dataframe['dlat'] = math.radians(dataframe['lat2']-dataframe['lat1'])
+	dataframe['dlon'] = math.radians(dataframe['lon2']-dataframe['lon1'])
+	dataframe['a'] = math.sin(dataframe['dlat']/2) * math.sin(dataframe['dlat']/2), \
+	+ math.cos(math.radians(dataframe['lat1'])) * math.cos(math.radians(dataframe['lat2'])), \
+	* math.sin(dataframe['dlon']/2) * math.sin(dataframe['dlon']/2)
+	dataframe['c'] = 2 * math.atan2(math.sqrt(dataframe['a']), math.sqrt(1-dataframe['a']))
+	dataframe['dist'] = radius * dataframe['c']
+
+	df_dist = dataframe['dist'] <= dist_max
+
+	df_dist.drop(columns=['dlat', 'dlon', 'a', 'c', 'dist'])
+
+	return df_dist
+
 def pairwise_filter(data1, data2, session_limit=600, detection_distance=100, detection_time=60):
 	"""Takes two datasets with identifiers to range join and filter to produce a list of probable joint identifiers
 
@@ -157,11 +258,17 @@ def pairwise_filter(data1, data2, session_limit=600, detection_distance=100, det
 	data1_epoch = standardize_epoch(data1)
 	data2_epoch = standardize_epoch(data2)
 
+	data1_session_filter = session_length_filter(data1_epoch, session_limit)
+	data2_session_filter = session_length_filter(data2_epoch, session_limit)
+	
 	# appends column names to distinguish between the two datasets
-	data1_epoch.add_suffix('1')
-	data2_epoch.add_suffix('2')
+	data1_session_filter.add_suffix('1')
+	data2_session_filter.add_suffix('2')
 
+	# range join includes filtering for time proximity of recorded event
+	df_range_join = time_range_join(data1_session_filter, data2_session_filter, detection_time)
 
+	df_distance_filter = haversine_dist_filter(df_range_join, detection_distance)
 
 def npmi(dataframe):
 	"""Takes a dataset with identifiers and calculates the Normalize Pointwise Mutual Information value
@@ -177,6 +284,3 @@ def npmi(dataframe):
 	npmi : pandas DataFrame
 		DataFrame of NMPI values for all pairs
 	"""
-
-
-	
