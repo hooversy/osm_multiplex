@@ -89,7 +89,7 @@ class TestStandardizeEpoch:
 		"""
 		Tests if all timestamps are already epochs and no change is needed
 		"""
-		test_times = [1519330080, 1519330080, 1519330080]
+		test_times = [1519330080, 1518199500, 1518200760]
 		test_df = pd.DataFrame(test_times, columns=['timestamp'])
 
 		processed_df = count_data.standardize_epoch(test_df)
@@ -122,3 +122,36 @@ class TestStandardizeEpoch:
 
 		assert processed_df['session_start'].dtype == 'int64'
 		assert processed_df['session_end'].dtype == 'int64'
+
+class TestSessionLengthFilter:
+	"""
+	Tests limiting the length of sessions to be included in candidate sessions
+	"""
+	def test_filter_sessions(self):
+		"""
+		Tests if dataframes with sessions are correctly filtered
+		"""
+		session_max = 100
+		test_sessions = [[1519330080, 1519330090], [151899500, 1518209500], [1518200760, 1518200770]]
+		filtered_sessions = [[1519330080, 1519330090], [1518200760, 1518200770]]
+
+		test_df = pd.DataFrame(test_sessions, columns=['session_start', 'session_end'])
+		filtered_df = pd.DataFrame(filtered_sessions, columns=['session_start', 'session_end'])
+
+		filtered_test_df = count_data.session_length_filter(test_df, session_max)
+
+		assert filtered_test_df.equals(filtered_df)
+
+	def test_no_sessions(self):
+		"""
+		Tests if dataframes with single timestamps are correctly not changed
+		"""
+		session_max = 100
+		test_timestamps = [1519330080, 1518199500, 1518200760]
+		test_df = pd.DataFrame(test_timestamps, columns=['timestamp'])
+
+		filtered_test_df = count_data.session_length_filter(test_df, session_max)
+
+		assert filtered_test_df.equals(test_df)
+
+

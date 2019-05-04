@@ -150,8 +150,8 @@ def session_length_filter(dataframe, session_max):
 	"""
 	try:
 		dataframe['session_length'] = dataframe['session_end'] - dataframe['session_start']
-		filtered_dataframe = dataframe['session_length'] <= session_max
-		filtered_dataframe.drop(columns=['session_length'])
+		mobility_sessions = dataframe['session_length'] <= session_max
+		filtered_dataframe = dataframe[mobility_sessions].drop(columns=['session_length']).reset_index(drop=True)
 	except:
 		filtered_dataframe = dataframe
 
