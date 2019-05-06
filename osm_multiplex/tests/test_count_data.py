@@ -194,8 +194,7 @@ class TestTimeRangeJoin:
 
 		df_range_join = count_data.time_range_join(data1, data2, time_range)
 
-		# taking hash approach because value dtypes are different so `equals` returns false
-		assert pd.util.hash_pandas_object(target).sum() == pd.util.hash_pandas_object(df_range_join).sum()
+		assert df_range_join.equals(target)
 
 class TestHaversineDistFilter:
 	"""
@@ -230,3 +229,15 @@ class TestPairwiseFilter:
 		paired_records = count_data.pairwise_filter(data1, data2)
 
 		assert paired_records.equals(target)
+
+class TestNpmi:
+	"""
+	Tests the calcualtion of the normalized pointwise mutual information value for two identifiers in a dataset
+	"""
+	def test_npmi(self):
+		data_list = [['bob', 'sue'], ['bob', 'sue'], ['bob', 'sandy'], ['bill', 'sandy'], ['biff', 'sandy'], ['jeff', 'mike']]
+		data = pd.DataFrame(data_list, columns=['element_id1', 'element_id2'])
+
+		npmi = count_data.npmi(data)
+
+		assert pd.util.hash_pandas_object(npmi).sum() == -5545055144939999294
