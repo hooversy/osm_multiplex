@@ -296,3 +296,29 @@ def npmi(dataframe):
 	npmi = calculations[['element_id1', 'element_id2', 'npmi']]
 
 	return npmi
+
+def npmi_data_filter(count_data, npmi_results, min_npmi=0.5):
+	"""Returns only data records where the npmi for the id pair exceeds a minimum threshold
+
+	Parameters
+	----------
+	count_data : pandas DataFrame
+		Records of candidate pairs likely output from pairwise_filer
+
+	npmi_results : pandas DataFrame
+		All the pairs of identifiers and their respective nmpi values from candidate pairs
+
+	min_nmpi : float
+		Threshold for accepted pairs recognizing "-1 for never occurring together, 
+		0 for independence, and +1 for complete co-occurrence."
+
+	Returns
+	-------
+	selected_data : pandas DataFrame
+		Only the records of identifier pairs that exceed the npmi threshold
+	"""
+	selected_pairs = npmi_results['npmi'] >= min_npmi
+	pair_list = npmi_results[selected_pairs].drop(columns=['npmi']).reset_index(drop=True)
+	selected_data = pd.merge(count_data, pair_list, on=['element_id1', 'element_id2'])
+
+	return selected_data

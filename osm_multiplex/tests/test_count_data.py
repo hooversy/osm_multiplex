@@ -232,7 +232,7 @@ class TestPairwiseFilter:
 
 class TestNpmi:
 	"""
-	Tests the calcualtion of the normalized pointwise mutual information value for two identifiers in a dataset
+	Tests the calculation of the normalized pointwise mutual information value for two identifiers in a dataset
 	"""
 	def test_npmi(self):
 		data_list = [['bob', 'sue'], ['bob', 'sue'], ['bob', 'sandy'], ['bill', 'sandy'], ['biff', 'sandy'], ['jeff', 'mike']]
@@ -241,3 +241,20 @@ class TestNpmi:
 		npmi = count_data.npmi(data)
 
 		assert pd.util.hash_pandas_object(npmi).sum() == -7751402083798698346
+
+class TestNpmiDataFilter:
+	"""
+	Tests if data is properly filtered by the value of the nmpi for the id pair
+	"""
+	def test_default_filter(self):
+		npmi_list = [['bob1', 'bob2', 0.6], ['sue1', 'susan1', 0.4], ['sue1', 'bob2', -0.4]]
+		data_list = [['bob1', 'bob2', 'ate cake'],['bob1', 'bob2', 'swam in the river'], ['sue1', 'susan1', 'chilled']]
+		target_list = [['bob1', 'bob2', 'ate cake'],['bob1', 'bob2', 'swam in the river']]
+
+		npmi = pd.DataFrame(npmi_list, columns=['element_id1', 'element_id2', 'npmi'])
+		data = pd.DataFrame(data_list, columns=['element_id1', 'element_id2', 'activity'])
+		target = pd.DataFrame(target_list, columns=['element_id1', 'element_id2', 'activity'])
+
+		test = count_data.npmi_data_filter(data, npmi)
+
+		assert test.equals(target)
