@@ -26,7 +26,6 @@ with open(path.join(here, 'CHANGELOG.md')) as changelog_file:
 long_description = readme + '\n\n' + changelog + '\n\n' + citation
 
 install_requires = [
-    'pyyaml>=3.12,<4.0',
     'numpy',
     'tables',
     'networkx',
