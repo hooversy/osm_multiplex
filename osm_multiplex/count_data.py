@@ -284,17 +284,14 @@ def npmi(dataframe):
 	"""
 	id_only = dataframe[['element_id1', 'element_id2']]
 	ids_size = id_only.groupby(['element_id1', 'element_id2']).size().to_frame('ids_count')
-	total_ids_count = ids_size.shape[0]
 	id1_size = id_only.groupby(['element_id1']).size().to_frame('id1_count')
-	total_id1_count = id1_size.shape[0]
 	id2_size = id_only.groupby(['element_id2']).size().to_frame('id2_count')
-	total_id2_count = id2_size.shape[0]
+	total_id_count = id_only.shape[0]
 	id_distinct = id_only.drop_duplicates().reset_index(drop=True)
 
-	# need to confirm exact approach to npmi; current value outputs are questionable
 	calculations = id_distinct.join(ids_size, on=['element_id1', 'element_id2']).join(id1_size, on=['element_id1']).join(id2_size, on=['element_id2'])
-	calculations['pmi'] = np.log(calculations['ids_count'] / total_ids_count / calculations['id1_count'] * total_id1_count / calculations['id2_count'] * total_id2_count)
-	calculations['npmi'] = calculations['pmi'] * -1 / np.log(calculations['ids_count'] / total_ids_count)
+	calculations['pmi'] = np.log((calculations['ids_count'] / total_id_count) / ((calculations['id1_count'] / total_id_count) * (calculations['id2_count'] / total_id_count)))
+	calculations['npmi'] = calculations['pmi'] / (-1 * np.log(calculations['ids_count'] / total_id_count))
 
 	npmi = calculations[['element_id1', 'element_id2', 'npmi']]
 

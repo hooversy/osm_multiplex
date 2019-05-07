@@ -240,4 +240,4 @@ class TestNpmi:
 
 		npmi = count_data.npmi(data)
 
-		assert pd.util.hash_pandas_object(npmi).sum() == -5545055144939999294
+		assert pd.util.hash_pandas_object(npmi).sum() == -7751402083798698346
