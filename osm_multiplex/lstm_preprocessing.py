@@ -59,15 +59,59 @@ def occupancy_level(dataframe):
 	"""
 	try:
 		if dataframe['boardings1'] != None:
-			dataframe['occupancy1'] = 0 # need running sum of boardings and alightings; keep in mind processing for data errors
+			dataframe = daily_cumulative(dataframe, '1')
 	except:
 		dataframe['occupancy1'] = 1
 
 	try:
 		if dataframe['boardings2'] != None:
-			dataframe['occupancy2'] = 0 # need running sum of boardings and alightings; keep in mind processing for data errors
+			dataframe = daily_cumulative(dataframe, '2')
 	except:
 		dataframe['occupancy2'] = 1
+
+def daily_cumulative(dataframe, identifier):
+	"""Cumulative daily sum of boardings and alightings to indicate vehicle occupancy. Currently lacks any
+	tuning or preprocessing, but that can be implemented in later versions
+
+	Parameters
+	----------
+	dataframe : pandas DataFrame
+		Records with at least one dataset being grouped
+
+	identifier : str
+		Indicates which dataset is the grouped data over which the cumulative occupancy is to be calculated
+			- '1' : Calculate for dataset 1
+			- '2' : Calculate for dataset 2
+	Returns
+	-------
+	sum_occupancy : pandas DataFrame
+		Dataframe with one dataset's boardings/alightings replaced by occupancy
+	"""
+	datetime_df = count_data.standardize_datetime(dataframe)
+	if indentifier == '1':
+		occupancy = 'occupancy1'
+		element = 'element_id1'
+		try:
+			time = 'timestamp1'
+		except:
+			time = 'session_start1'
+	elif identifier == '2':
+		occupancy = 'occupancy2'
+		element = 'element_id2'
+		try:
+			time = 'timestamp2'
+		except:
+			time = 'session_start2'
+	else:
+		raise Exception('Need valid dataset identifier')
+
+	datetime_df['date'] = datetime_df['time'].date()
+	occupancy_count = datetime_df.sort_values([time]).groupby([element, 'date']).sum().fillna(0).groupby(level=0).cumsum()
+	datetime_df.set_index([element, 'date'], inplace=True)
+	datetime_df[occupancy] = occupancy_count
+	sum_occupancy = datetime_df.reset_index(inplace=True).drop(columns=['date'])
+
+	return sum_occupancy
 
 def time_grouping(dataframe, interval='15T', time_selection='1'):
 	"""Groups data by temporal interval
