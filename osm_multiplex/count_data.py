@@ -98,6 +98,11 @@ def standardize_datetime(dataframe):
 			dataframe['session_end'] = pd.to_datetime(dataframe['session_end'],unit='s')
 	except:
 		pass
+	try:
+		if dataframe['time'].dtype != 'datetime64[ns]':
+			dataframe['time'] = pd.to_datetime(dataframe['time'],unit='s')
+	except:
+		pass
 
 	return dataframe
 
@@ -123,6 +128,11 @@ def standardize_epoch(dataframe):
 		if dataframe['session_start'].dtype != 'int64' or dataframe['session_end'].dtype != 'int64':
 			dataframe['session_start'] = dataframe['session_start'].astype(np.int64) // 10**9
 			dataframe['session_end'] = dataframe['session_end'].astype(np.int64) // 10**9
+	except:
+		pass
+	try:
+		if dataframe['time'].dtype != 'int64':
+			dataframe['time'] = dataframe['time'].astype(np.int64) // 10**9
 	except:
 		pass
 
