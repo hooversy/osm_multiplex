@@ -44,8 +44,24 @@ class TestOccupancyLevel:
 
 		assert test.equals(target)
 
-	#def test_both_grouped(self):
+	def test_both_grouped(self):
 		"""Both datasets have grouped counts"""
+		data_list = [['bike1', 'scooter1', 1519330080, 1519330081, 2, 1, 3, 1],
+					 ['bike1', 'scooter1', 1519330085, 1519330086, 3, 0, 2, 1],
+					 ['bike1', 'scooter1', 1519430080, 1519430081, 3, 1, 4, 2],
+					 ['bike1', 'scooter1', 1519430085, 1519430086, 1, 2, 0, 1]]
+		target_list = [['bike1', 'scooter1', '2018-02-22 20:08:00', '2018-02-22 20:08:01', 1, 2],
+					   ['bike1', 'scooter1', '2018-02-22 20:08:05', '2018-02-22 20:08:06', 4, 3],
+					   ['bike1', 'scooter1', '2018-02-23 23:54:40', '2018-02-23 23:54:41', 2, 2],
+					   ['bike1', 'scooter1', '2018-02-23 23:54:45', '2018-02-23 23:54:46', 1, 1]]
+		data = pd.DataFrame(data_list, columns=['element_id1', 'element_id2', 'timestamp1', 'timestamp2', 'boardings1', 'alightings1', 'boardings2', 'alightings2'])
+		target = pd.DataFrame(target_list, columns=['element_id1', 'element_id2', 'timestamp1', 'timestamp2', 'occupancy1', 'occupancy2'])
+		target['timestamp1'] =  pd.to_datetime(target['timestamp1'])
+		target['timestamp2'] =  pd.to_datetime(target['timestamp2'])
+
+		test = lstm_preprocessing.occupancy_level(data)
+
+		assert test.equals(target)
 
 class TestDailyCumulative:
 	"""Test the cumulative sum of grouped data to derive occupancy"""
@@ -61,16 +77,102 @@ class TestDailyCumulative:
 
 		assert test.equals(target)
 
+	def test_summing_2_timestamp(self):
+		"""Test cumulative sum for dataset 2 with timestamp"""
+		data_list = [['bob2', 1519330080, 2, 1], ['bob2', 1519330085, 3, 0], ['bob2', 1519430080, 3, 1], ['bob2', 1519430085, 1, 2]]
+		target_list = [['bob2', '2018-02-22 20:08:00', 1], ['bob2', '2018-02-22 20:08:05', 4], ['bob2', '2018-02-23 23:54:40', 2], ['bob2', '2018-02-23 23:54:45', 1]]
+		data = pd.DataFrame(data_list, columns=['element_id2', 'timestamp2', 'boardings2', 'alightings2'])
+		target = pd.DataFrame(target_list, columns=['element_id2', 'timestamp2', 'occupancy2'])
+		target['timestamp2'] =  pd.to_datetime(target['timestamp2'])
+
+		test = lstm_preprocessing.daily_cumulative(data, '2')
+
+		assert test.equals(target)
+
+	def test_summing_1_session(self):
+		"""Test cumulative sum for dataset 1 with session times"""
+		data_list = [['bob1', 1519330080, 1519330081, 2, 1],
+					 ['bob1', 1519330085, 1519330086, 3, 0],
+					 ['bob1', 1519430080, 1519430081, 3, 1],
+					 ['bob1', 1519430085, 1519430086, 1, 2]]
+		target_list = [['bob1', '2018-02-22 20:08:00', '2018-02-22 20:08:01', 1],
+					   ['bob1', '2018-02-22 20:08:05', '2018-02-22 20:08:06', 4],
+					   ['bob1', '2018-02-23 23:54:40', '2018-02-23 23:54:41', 2],
+					   ['bob1', '2018-02-23 23:54:45', '2018-02-23 23:54:46', 1]]
+		data = pd.DataFrame(data_list, columns=['element_id1', 'session_start1', 'session_end1', 'boardings1', 'alightings1'])
+		target = pd.DataFrame(target_list, columns=['element_id1', 'session_start1', 'session_end1', 'occupancy1'])
+		target['session_start1'] =  pd.to_datetime(target['session_start1'])
+		target['session_end1'] =  pd.to_datetime(target['session_end1'])
+
+		test = lstm_preprocessing.daily_cumulative(data, '1')
+
+		assert test.equals(target)
+
+	def test_summing_2_session(self):
+		"""Test cumulative sum for dataset 2 with session times"""
+		data_list = [['bob2', 1519330080, 1519330081, 2, 1],
+					 ['bob2', 1519330085, 1519330086, 3, 0],
+					 ['bob2', 1519430080, 1519430081, 3, 1],
+					 ['bob2', 1519430085, 1519430086, 1, 2]]
+		target_list = [['bob2', '2018-02-22 20:08:00', '2018-02-22 20:08:01', 1],
+					   ['bob2', '2018-02-22 20:08:05', '2018-02-22 20:08:06', 4],
+					   ['bob2', '2018-02-23 23:54:40', '2018-02-23 23:54:41', 2],
+					   ['bob2', '2018-02-23 23:54:45', '2018-02-23 23:54:46', 1]]
+		data = pd.DataFrame(data_list, columns=['element_id2', 'session_start2', 'session_end2', 'boardings2', 'alightings2'])
+		target = pd.DataFrame(target_list, columns=['element_id2', 'session_start2', 'session_end2', 'occupancy2'])
+		target['session_start2'] =  pd.to_datetime(target['session_start2'])
+		target['session_end2'] =  pd.to_datetime(target['session_end2'])
+
+		test = lstm_preprocessing.daily_cumulative(data, '2')
+
+		assert test.equals(target)
+
 class TestTimeGrouping:
 	"""Tests the grouping of records into specified time intervals"""
-	def test_timestamp1_session2_selection1(self):
-		data_list = [[1519330080, 1519330090, 44.44, 55.55, 2, 3], [1519330081, 1519330030, 44.44, 55.55, 1, 4]]
-		target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7]]
+	def test_timestamp1_session2_interval15_selection1(self):
+		data_list = [[1519330080, 1519330090, 44.44, 55.55, 2, 3],
+					 [1519330081, 1519330030, 44.44, 55.55, 1, 4],
+					 [1519430080, 1519430090, 44.44, 55.55, 3, 2],
+					 [1519430081, 1519430030, 44.44, 55.55, 2, 6]]
+		target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7],
+					   ['2018-02-23 23:45:00', 44.44, 55.55, 5, 8]]
 		data = pd.DataFrame(data_list, columns=['timestamp1', 'session_start2', 'lat', 'lon', 'occupancy1', 'occupancy2'])
 		target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2'])
 		target['time'] =  pd.to_datetime(target['time'])
 		target_multi = target.set_index(['time', 'lat', 'lon'])
 
-		test = lstm_preprocessing.time_grouping(data)
+		test = lstm_preprocessing.time_grouping(data, interval='15T', time_selection='1')
+
+		assert test.equals(target_multi)
+
+	def test_session1_timestamp2_interval60_selection2(self):
+		data_list = [[1519330080, 1519330090, 44.44, 55.55, 2, 3],
+					 [1519330081, 1519330030, 44.44, 55.55, 1, 4],
+					 [1519430080, 1519430090, 44.44, 55.55, 3, 2],
+					 [1519430081, 1519430030, 44.44, 55.55, 2, 6]]
+		target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7],
+					   ['2018-02-23 23:00:00', 44.44, 55.55, 5, 8]]
+		data = pd.DataFrame(data_list, columns=['session_start1', 'timestamp2', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+		target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+		target['time'] =  pd.to_datetime(target['time'])
+		target_multi = target.set_index(['time', 'lat', 'lon'])
+
+		test = lstm_preprocessing.time_grouping(data, interval='60T', time_selection='2')
+
+		assert test.equals(target_multi)
+
+	def test_session1_timestamp2_interval30_selectionavg(self):
+		data_list = [[1519330080, 1519330090, 44.44, 55.55, 2, 3],
+					 [1519330081, 1519330030, 44.44, 55.55, 1, 4],
+					 [1519430080, 1519430090, 44.44, 55.55, 3, 2],
+					 [1519430081, 1519430030, 44.44, 55.55, 2, 6]]
+		target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7],
+					   ['2018-02-23 23:30:00', 44.44, 55.55, 5, 8]]
+		data = pd.DataFrame(data_list, columns=['session_start1', 'timestamp2', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+		target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+		target['time'] =  pd.to_datetime(target['time'])
+		target_multi = target.set_index(['time', 'lat', 'lon'])
+
+		test = lstm_preprocessing.time_grouping(data, interval='30T', time_selection='avg')
 
 		assert test.equals(target_multi)

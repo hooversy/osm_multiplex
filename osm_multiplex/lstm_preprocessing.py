@@ -4,7 +4,6 @@
 
 # third-party libraries
 import pandas as pd
-import numpy as np
 
 # local imports
 from . import count_data
@@ -38,7 +37,7 @@ def spatial_grouping(dataframe, location_selection='1'):
 
 	return single_location.reset_index(drop=True)
 
-def osm_location_assignment(dataframe, assignment_method='1'):
+def assign_osm(dataframe, assignment_method='1'):
 	# still under development
 	return dataframe
 
@@ -57,16 +56,15 @@ def occupancy_level(dataframe):
 	dataframe : pandas DataFrame
 		Records that now include an occupancy value indicative of the presence that detected by that system
 	"""
-	try:
-		if dataframe['boardings1'] != None:
-			dataframe = daily_cumulative(dataframe, '1')
-	except:
+
+	if 'boardings1' in dataframe.columns:
+		dataframe = daily_cumulative(dataframe, '1')
+	else:
 		dataframe['occupancy1'] = 1
 
-	try:
-		if dataframe['boardings2'] != None:
-			dataframe = daily_cumulative(dataframe, '2')
-	except:
+	if 'boardings2' in dataframe.columns:
+		dataframe = daily_cumulative(dataframe, '2')
+	else:
 		dataframe['occupancy2'] = 1
 
 	return dataframe
@@ -95,18 +93,18 @@ def daily_cumulative(dataframe, identifier):
 		element = 'element_id1'
 		boardings = 'boardings1'
 		alightings = 'alightings1'
-		try:
+		if 'timestamp1' in datetime_df.columns:
 			time = 'timestamp1'
-		except:
+		else:
 			time = 'session_start1'
 	elif identifier == '2':
 		occupancy = 'occupancy2'
 		element = 'element_id2'
 		boardings = 'boardings2'
 		alightings = 'alightings2'
-		try:
+		if 'timestamp2' in datetime_df.columns:
 			time = 'timestamp2'
-		except:
+		else:
 			time = 'session_start2'
 	else:
 		raise Exception('Need valid dataset identifier')
@@ -165,7 +163,7 @@ def time_grouping(dataframe, interval='15T', time_selection='1'):
 		except:
 			epoch_df['time2'] = epoch_df['session_start2']
 
-		epoch_df['time'] = np.mean(['time1', 'time2'], dtype=int)
+		epoch_df['time'] = epoch_df[['time1', 'time2']].mean(axis=1).astype(int)
 	else:
 		raise Exception('Time selection not valid')
 
