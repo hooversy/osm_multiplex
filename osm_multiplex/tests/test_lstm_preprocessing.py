@@ -31,9 +31,35 @@ class TestSpatialGrouping:
 #class TestOsmLocationAssignment:
 	# pending development of this function
 
-#class TestOccupancyLevel:
+class TestOccupancyLevel:
 	"""Tests the output of occupancy levels for both grouped and single user data"""
-	# pending development of the running sum for grouped data
+	def test_both_individual(self):
+		"""Both datasets have individual identifiers"""
+		data_list = [['bike1', 'scooter1']]
+		target_list = [['bike1', 'scooter1', 1, 1]]
+		data = pd.DataFrame(data, columns=['element_id1', 'element_id2'])
+		target = pd.DataFrame(target_list, columns=['element_id1', 'element_id2', 'occupancy1', 'occupancy2'])
+
+		test = lstm_preprocessing.occupancy_level(data)
+
+		assert test.equals(target)
+
+	#def test_both_grouped(self):
+		"""Both datasets have grouped counts"""
+
+class TestDailyCumulative:
+	"""Test the cumulative sum of grouped data to derive occupancy"""
+		def test_summing_1_timestamp:
+			"""Test cumulative sum for dataset 1 with timestamp"""
+			data_list = [['bob1', 1519330080, 2, 1], ['bob1', 1519330085, 3, 0], ['bob1', 1519430080, 3, 1], ['bob1', 1519430085, 1, 2]]
+			target_list = [['bob1', '2018-02-22 20:08:00', 1], ['bob1', '2018-02-22 20:08:05', 4], ['bob1', '2018-02-23 23:54:40', 2], ['bob1', '2018-02-23 23:54:45', 1]]
+			data = pd.DataFrame(data_list, columns=['element_id1', 'timestamp1', 'boardings1', 'alightings1'])
+			target = pd.DataFrame(target_list, columns=['element_id1', 'timestamp1', 'occupancy1'])
+			target['timestamp1'] =  pd.to_datetime(target['timestamp1'])
+
+			test = lstm_preprocessing.daily_cumulative(data, '1')
+
+			assert test.equals(target)
 
 class TestTimeGrouping:
 	"""Tests the grouping of records into specified time intervals"""

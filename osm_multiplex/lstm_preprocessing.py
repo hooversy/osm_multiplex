@@ -91,6 +91,8 @@ def daily_cumulative(dataframe, identifier):
 	if indentifier == '1':
 		occupancy = 'occupancy1'
 		element = 'element_id1'
+		boardings = 'boardings1'
+		alightings = 'alightings1'
 		try:
 			time = 'timestamp1'
 		except:
@@ -98,6 +100,8 @@ def daily_cumulative(dataframe, identifier):
 	elif identifier == '2':
 		occupancy = 'occupancy2'
 		element = 'element_id2'
+		boardings = 'boardings2'
+		alightings = 'alightings2'
 		try:
 			time = 'timestamp2'
 		except:
@@ -105,11 +109,11 @@ def daily_cumulative(dataframe, identifier):
 	else:
 		raise Exception('Need valid dataset identifier')
 
-	datetime_df['date'] = datetime_df['time'].date()
-	occupancy_count = datetime_df.sort_values([time]).groupby([element, 'date']).sum().fillna(0).groupby(level=0).cumsum()
-	datetime_df.set_index([element, 'date'], inplace=True)
-	datetime_df[occupancy] = occupancy_count
-	sum_occupancy = datetime_df.reset_index(inplace=True).drop(columns=['date'])
+	datetime_df['date'] = datetime_df[time].dt.date
+	datetime_df['boarding_sum'] = datetime_df.sort_values([time]).groupby([element, 'date'])[boardings].cumsum()
+	datetime_df['alighting_sum'] = datetime_df.sort_values([time]).groupby([element, 'date'])[alightings].cumsum()
+	datetime_df[occupancy] = datetime_df['boarding_sum'] - datetime_df['alighting_sum']
+	sum_occupancy = datetime_df.drop(columns=['date', boardings, alightings, 'boarding_sum', 'alighting_sum'])
 
 	return sum_occupancy
 
