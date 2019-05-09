@@ -87,22 +87,14 @@ def standardize_datetime(dataframe):
 	dataframe : pandas DataFrame
 		DataFrame with all times now datetime format
 	"""
-	try:
-		if dataframe['timestamp'].dtype != 'datetime64[ns]':
-			dataframe['timestamp'] = pd.to_datetime(dataframe['timestamp'],unit='s')
-	except:
-		pass
-	try:
-		if dataframe['session_start'].dtype != 'datetime64[ns]' or dataframe['session_end'].dtype != 'datetime64[ns]':
-			dataframe['session_start'] = pd.to_datetime(dataframe['session_start'],unit='s')
-			dataframe['session_end'] = pd.to_datetime(dataframe['session_end'],unit='s')
-	except:
-		pass
-	try:
-		if dataframe['time'].dtype != 'datetime64[ns]':
-			dataframe['time'] = pd.to_datetime(dataframe['time'],unit='s')
-	except:
-		pass
+	time_list = ['timestamp', 'timestamp1', 'timestamp2', 'time', 
+				 'session_start', 'session_end', 'session_start1', 'session_end1', 'session_start2', 'session_end2']
+	for time in time_list:
+		try:
+			if dataframe[time].dtype != 'datetime64[ns]':
+				dataframe[time] = pd.to_datetime(dataframe[time],unit='s')
+		except:
+			pass
 
 	return dataframe
 
@@ -119,22 +111,14 @@ def standardize_epoch(dataframe):
 	dataframe : pandas DataFrame
 		DataFrame with all times now unix time int64 format
 	"""
-	try:
-		if dataframe['timestamp'].dtype != 'int64':
-			dataframe['timestamp'] = dataframe['timestamp'].astype(np.int64) // 10**9
-	except:
-		pass
-	try:
-		if dataframe['session_start'].dtype != 'int64' or dataframe['session_end'].dtype != 'int64':
-			dataframe['session_start'] = dataframe['session_start'].astype(np.int64) // 10**9
-			dataframe['session_end'] = dataframe['session_end'].astype(np.int64) // 10**9
-	except:
-		pass
-	try:
-		if dataframe['time'].dtype != 'int64':
-			dataframe['time'] = dataframe['time'].astype(np.int64) // 10**9
-	except:
-		pass
+	time_list = ['timestamp', 'timestamp1', 'timestamp2', 'time', 
+				 'session_start', 'session_end', 'session_start1', 'session_end1', 'session_start2', 'session_end2']
+	for time in time_list:
+		try:
+			if dataframe[time].dtype != 'int64':
+				dataframe[time] = dataframe[time].astype(np.int64) // 10**9
+		except:
+			pass
 
 	return dataframe
 
