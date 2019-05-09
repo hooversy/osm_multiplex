@@ -69,6 +69,8 @@ def occupancy_level(dataframe):
 	except:
 		dataframe['occupancy2'] = 1
 
+	return dataframe
+
 def daily_cumulative(dataframe, identifier):
 	"""Cumulative daily sum of boardings and alightings to indicate vehicle occupancy. Currently lacks any
 	tuning or preprocessing, but that can be implemented in later versions
@@ -88,7 +90,7 @@ def daily_cumulative(dataframe, identifier):
 		Dataframe with one dataset's boardings/alightings replaced by occupancy
 	"""
 	datetime_df = count_data.standardize_datetime(dataframe)
-	if indentifier == '1':
+	if identifier == '1':
 		occupancy = 'occupancy1'
 		element = 'element_id1'
 		boardings = 'boardings1'
