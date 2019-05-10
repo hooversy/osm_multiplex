@@ -28,8 +28,32 @@ class TestSpatialGrouping:
 
 		assert test.equals(target)
 
-#class TestOsmLocationAssignment:
-	# pending development of this function
+	def test_selection_osm(self):
+		"""Select the location by finding the nearest OSM node to the average"""
+		data_list = [[44.594487, -123.262589, 44.562769, -123.267733],
+			 [44.594528, -123.261476, 44.563046, -123.268784]]
+		target_list = [[36921149, 44.57822, -123.264745],
+					   [36921149, 44.57822, -123.264745]]
+		data = pd.DataFrame(data_list, columns=['lat1', 'lon1', 'lat2', 'lon2'])
+		target = pd.DataFrame(target_list, columns=['osm_id', 'lat', 'lon'])
+
+		test = lstm_preprocessing.spatial_grouping(data, location_selection='osm')
+
+		assert test.equals(target)
+
+class TestAssignOsm:
+	"""Find the nearest OSM node to the average of the two dataset locations"""
+	def test_find_nearest(self):
+		data_list = [[44.594487, -123.262589, 44.562769, -123.267733],
+					 [44.594528, -123.261476, 44.563046, -123.268784]]
+		target_list = [[36921149, 44.57822, -123.264745],
+					   [36921149, 44.57822, -123.264745]]
+		data = pd.DataFrame(data_list, columns=['lat1', 'lon1', 'lat2', 'lon2'])
+		target = pd.DataFrame(target_list, columns=['osm_id', 'lat', 'lon'])
+
+		test = lstm_preprocessing.assign_osm(data)
+
+		assert test.equals(target)
 
 class TestOccupancyLevel:
 	"""Tests the output of occupancy levels for both grouped and single user data"""

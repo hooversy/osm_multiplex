@@ -31,6 +31,7 @@ install_requires = [
     'networkx',
     'osmnx',
     'pandas'
+    'scikit-learn'
 ]
 
 tests_require = [

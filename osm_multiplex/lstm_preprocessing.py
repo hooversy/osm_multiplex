@@ -4,11 +4,13 @@
 
 # third-party libraries
 import pandas as pd
+import osmnx as ox
 
 # local imports
 from . import count_data
+from . import osm_download
 
-def spatial_grouping(dataframe, location_selection='1'):
+def spatial_grouping(dataframe, location_selection='1', mode='all'):
 	"""Assigns a single location to the data records. The data records can choose the location of dataset 1,
 	the location of dataset 2, or get a location assignment based on an osm-derived network.
 
@@ -23,6 +25,9 @@ def spatial_grouping(dataframe, location_selection='1'):
 			- '2' : Use dataset 2's location
 			- 'osm' : assign a location based on an osm-derived network
 
+	mode : str
+		Mode choice of  {‘walk’, ‘bike’, ‘drive’, ‘drive_service’, ‘all’, ‘all_private’, ‘none’}
+
 	Returns
 	-------
 	single_location : pandas DataFrame
@@ -33,13 +38,45 @@ def spatial_grouping(dataframe, location_selection='1'):
 	if location_selection == '2':
 		single_location = dataframe.drop(columns=['lat1', 'lon1']).rename(index=str, columns={"lat2": "lat", "lon2": "lon"})
 	if location_selection == 'osm':
-		single_location = assign_osm(dataframe)
+		single_location = assign_osm(dataframe, mode)
 
 	return single_location.reset_index(drop=True)
 
-def assign_osm(dataframe, assignment_method='1'):
-	# still under development
-	return dataframe
+def assign_osm(dataframe, mode='all'):
+	"""Assigns an OSM node by taking the average location of the two datasets and finding the nearest node present in the
+	mode layer.
+
+	Parameters
+	----------
+	dataframe : pandas DataFrame
+		The data records to be used to find the nearest OSM node
+
+	mode : str
+		Mode choice of  {‘walk’, ‘bike’, ‘drive’, ‘drive_service’, ‘all’, ‘all_private’, ‘none’}
+
+	Returns
+	-------
+	df_osm_location : pandas DataFrame
+		Data records with the OSM ID of the nearest node and its respective lat/lon
+	"""
+
+	max_lat = dataframe[['lat1', 'lat2']].max().max()
+	min_lat = dataframe[['lat1', 'lat2']].min().min()
+	max_lon = dataframe[['lon1', 'lon2']].max().max()
+	min_lon = dataframe[['lon1', 'lon2']].min().min()
+
+	osm_layer = osm_download.download_osm_layer([max_lat, min_lat, max_lon, min_lon], mode)
+	osm_nodes = pd.DataFrame([[node[0], node[1]['y'], node[1]['x']] for node in osm_layer.nodes(data=True)],
+							 columns=['osm_id', 'lat', 'lon']).set_index('osm_id')
+
+	dataframe['avg_lat'] = dataframe[['lat1', 'lat2']].mean(axis=1)
+	dataframe['avg_lon'] = dataframe[['lon1', 'lon2']].mean(axis=1)
+
+	nearest_node = ox.get_nearest_nodes(osm_layer, dataframe['avg_lon'], dataframe['avg_lat'], method='balltree')
+	dataframe['osm_id'] = nearest_node
+	df_osm_location = dataframe.join(osm_nodes, on=['osm_id']).drop(columns=['lat1', 'lon1', 'lat2', 'lon2', 'avg_lat', 'avg_lon'])
+
+	return df_osm_location
 
 def occupancy_level(dataframe):
 	"""Calculates the count to be attributed to a record. If connected to an individual, then should be assigned
