@@ -5,6 +5,7 @@
 # third-party libraries
 import pandas as pd
 import osmnx as ox
+import numpy as np
 
 # local imports
 from . import count_data
@@ -206,5 +207,6 @@ def time_grouping(dataframe, interval='15T', time_selection='1'):
 
     datetime_df = count_data.standardize_datetime(epoch_df[['time', 'lat', 'lon', 'occupancy1', 'occupancy2']])
     grouped_time = datetime_df.groupby([pd.Grouper(key='time', freq=interval), 'lat', 'lon']).sum()
+    grouped_time['difference'] = (grouped_time['occupancy1'] - grouped_time['occupancy2']).abs()
 
     return grouped_time

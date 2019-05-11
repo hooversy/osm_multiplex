@@ -158,10 +158,10 @@ class TestTimeGrouping:
                      [1519330081, 1519330030, 44.44, 55.55, 1, 4],
                      [1519430080, 1519430090, 44.44, 55.55, 3, 2],
                      [1519430081, 1519430030, 44.44, 55.55, 2, 6]]
-        target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7],
-                       ['2018-02-23 23:45:00', 44.44, 55.55, 5, 8]]
+        target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7, 4],
+                       ['2018-02-23 23:45:00', 44.44, 55.55, 5, 8, 3]]
         data = pd.DataFrame(data_list, columns=['timestamp1', 'session_start2', 'lat', 'lon', 'occupancy1', 'occupancy2'])
-        target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+        target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2', 'difference'])
         target['time'] =  pd.to_datetime(target['time'])
         target_multi = target.set_index(['time', 'lat', 'lon'])
 
@@ -174,10 +174,10 @@ class TestTimeGrouping:
                      [1519330081, 1519330030, 44.44, 55.55, 1, 4],
                      [1519430080, 1519430090, 44.44, 55.55, 3, 2],
                      [1519430081, 1519430030, 44.44, 55.55, 2, 6]]
-        target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7],
-                       ['2018-02-23 23:00:00', 44.44, 55.55, 5, 8]]
+        target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7, 4],
+                       ['2018-02-23 23:00:00', 44.44, 55.55, 5, 8, 3]]
         data = pd.DataFrame(data_list, columns=['session_start1', 'timestamp2', 'lat', 'lon', 'occupancy1', 'occupancy2'])
-        target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+        target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2', 'difference'])
         target['time'] =  pd.to_datetime(target['time'])
         target_multi = target.set_index(['time', 'lat', 'lon'])
 
@@ -190,10 +190,10 @@ class TestTimeGrouping:
                      [1519330081, 1519330030, 44.44, 55.55, 1, 4],
                      [1519430080, 1519430090, 44.44, 55.55, 3, 2],
                      [1519430081, 1519430030, 44.44, 55.55, 2, 6]]
-        target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7],
-                       ['2018-02-23 23:30:00', 44.44, 55.55, 5, 8]]
+        target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7, 4],
+                       ['2018-02-23 23:30:00', 44.44, 55.55, 5, 8, 3]]
         data = pd.DataFrame(data_list, columns=['session_start1', 'timestamp2', 'lat', 'lon', 'occupancy1', 'occupancy2'])
-        target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+        target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2', 'difference'])
         target['time'] =  pd.to_datetime(target['time'])
         target_multi = target.set_index(['time', 'lat', 'lon'])
 
