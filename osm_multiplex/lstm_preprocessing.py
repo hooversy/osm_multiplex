@@ -210,3 +210,21 @@ def time_grouping(dataframe, interval='15T', time_selection='1'):
     grouped_time['difference'] = (grouped_time['occupancy1'] - grouped_time['occupancy2']).abs()
 
     return grouped_time
+
+def weekly_difference_dataframes(dataframe, interval='15T'):
+    dataframes = {}
+    
+    for name, group in dataframe.groupby(['lat', 'lon']):
+        dataframes['location' + str(name)] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
+    for location, counts in dataframes.items():
+        gaps_filled = counts[['difference']].asfreq(freq=interval, fill_value=0).reset_index(drop=False)
+        pivoted = pd.pivot_table(gaps_filled,
+                                 index=[gaps_filled['time'].dt.year, gaps_filled['time'].dt.week],
+                                 columns=gaps_filled.groupby(pd.Grouper(key='time', freq='W')).cumcount().add(1),
+                                 values=['difference'],
+                                 aggfunc='sum')
+        pivoted.index.names = ['year', 'week']
+        dataframes[location] = pivoted.iloc[1:-1] # removes likely incomplete first and last weeks
+
+    return dataframes
+
