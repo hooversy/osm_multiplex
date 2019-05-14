@@ -114,7 +114,7 @@ class LstmAutoEncoder(object):
         dist = self.predict(timeseries_dataset)
         return zip(dist >= self.threshold, dist)
 
-def main(data):
+def anomaly_detect(data):
     model_dir_path = './models'
     print(data.head())
     np_data = data.values

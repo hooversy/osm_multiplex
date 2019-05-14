@@ -227,4 +227,3 @@ def weekly_difference_dataframes(dataframe, interval='15T'):
         dataframes[location] = pivoted.iloc[1:-1] # removes likely incomplete first and last weeks
 
     return dataframes
-
