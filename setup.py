@@ -27,7 +27,7 @@ long_description = readme + '\n\n' + changelog + '\n\n' + citation
 
 install_requires = [
     'numpy',
-    'tables',
+    'keras',
     'networkx',
     'osmnx',
     'pandas'

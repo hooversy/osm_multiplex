@@ -1,7 +1,6 @@
 name: test-environment
 channels:
 - conda-forge
-- defaults
 dependencies:
   - python=${PYTHON}
   - pytest>=3.2.0
@@ -14,3 +13,7 @@ dependencies:
   - pytables
   - pandas
   - scikit-learn
+  - tensorflow=1.13.1 --no-deps
+  - keras=2.2.4 --no-deps
+  - tensorflow-estimator --no-deps
+  - grpcio=1.16.0 --no-deps
