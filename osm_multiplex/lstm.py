@@ -38,7 +38,7 @@ class LstmAutoEncoder(object):
 
     def load_model(self, model_dir_path):
         config_file_path = LstmAutoEncoder.get_config_file(model_dir_path)
-        self.config = np.load(config_file_path).item()
+        self.config = np.load(config_file_path, allow_pickle=True).item()
         self.metric = self.config['metric']
         self.time_window_size = self.config['time_window_size']
         self.threshold = self.config['threshold']
@@ -115,22 +115,40 @@ class LstmAutoEncoder(object):
         return zip(dist >= self.threshold, dist)
 
 def anomaly_detect(data):
-    model_dir_path = './models'
-    print(data.head())
-    np_data = data.values
-    scaler = MinMaxScaler()
-    np_data = scaler.fit_transform(np_data)
-    print(np_data.shape)
+    """
 
-    ae = LstmAutoEncoder()
+    Parameters
+    ----------
+    data : a dict of pandas DataFrames
+        Each key in the dictionary is a specific location with the value being a DataFrame of two time-series
+        representing collected data from each source
 
-    # fit the data and save model into model_dir_path
-    ae.fit(np_data[:, :], model_dir_path=model_dir_path, estimated_negative_sample_ratio=0.9)
 
-    # load back the model saved in model_dir_path detect anomaly
-    ae.load_model(model_dir_path)
-    anomaly_information = ae.anomaly(np_data[:, :])
-    reconstruction_error = []
-    for idx, (is_anomaly, dist) in enumerate(anomaly_information):
-        print('# ' + str(idx) + ' is ' + ('abnormal' if is_anomaly else 'normal') + ' (dist: ' + str(dist) + ')')
-        reconstruction_error.append(dist)
+    Returns
+    -------
+
+    """
+    reconstruction_dict = {}
+    threshold_dict = {}
+    for location, dataframe in data.items():
+        model_dir_path = './models'
+        print(location + ' processing')
+        np_data = dataframe.values
+        scaler = MinMaxScaler()
+        np_data = scaler.fit_transform(np_data)
+        print(np_data.shape)
+
+        ae = LstmAutoEncoder()
+
+        # fit the data and save model into model_dir_path
+        ae.fit(np_data[:, :], model_dir_path=model_dir_path, estimated_negative_sample_ratio=0.9)
+
+        # load back the model saved in model_dir_path detect anomaly
+        ae.load_model(model_dir_path)
+        anomaly_information = ae.anomaly(np_data[:, :])
+        reconstruction_error = []
+        for idx, (is_anomaly, dist) in enumerate(anomaly_information):
+            print('# ' + str(idx) + ' is ' + ('abnormal' if is_anomaly else 'normal') + ' (dist: ' + str(dist) + ')')
+            reconstruction_error.append(dist)
+        reconstruction_dict[location] = reconstruction_error
+        threshold_dict[location] = ae.threshold
