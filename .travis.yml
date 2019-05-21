@@ -17,8 +17,8 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda config --append channels conda-forge
-  - conda env create test-environment
-  - source activate test-environment
+  - conda create --name test-environment
+  - conda activate test-environment
   - conda install python=${PYTHON}
   - conda install pytest>=3.2.0
   - conda install pytest-cov
