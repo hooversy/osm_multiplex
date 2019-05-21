@@ -119,17 +119,17 @@ def anomaly_detect(data):
 
     Parameters
     ----------
-    data : a dict of pandas DataFrames
+    data : dict of pandas DataFrames
         Each key in the dictionary is a specific location with the value being a DataFrame of two time-series
         representing collected data from each source
 
 
     Returns
     -------
+    reconstruction_dict : dict of lists
 
     """
     reconstruction_dict = {}
-    threshold_dict = {}
     for location, dataframe in data.items():
         model_dir_path = './models'
         print(location + ' processing')
@@ -150,5 +150,6 @@ def anomaly_detect(data):
         for idx, (is_anomaly, dist) in enumerate(anomaly_information):
             print('# ' + str(idx) + ' is ' + ('abnormal' if is_anomaly else 'normal') + ' (dist: ' + str(dist) + ')')
             reconstruction_error.append(dist)
-        reconstruction_dict[location] = reconstruction_error
-        threshold_dict[location] = ae.threshold
+        reconstruction_dict[str(location) + "_" + str(ae.threshold)] = reconstruction_error
+
+    return reconstruction_dict
