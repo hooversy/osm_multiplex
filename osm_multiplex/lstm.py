@@ -4,6 +4,9 @@
 based on: https://github.com/chen0040/keras-anomaly-detection/blob/master/keras_anomaly_detection/library/recurrent.py
 """
 
+# standard libraries
+import os
+
 # third-party libraries
 
 from keras.layers import Dense, LSTM
