@@ -122,7 +122,7 @@ def standardize_epoch(dataframe):
 
     return dataframe
 
-def session_length_filter(dataframe, session_max):
+def session_length_filter(dataframe, session_max=600):
     """If dataset has start and stop times for a session, filters out sessions exceeding max defined length
     
     Parameters
@@ -148,7 +148,7 @@ def session_length_filter(dataframe, session_max):
 
     return filtered_dataframe
 
-def time_range_join(data1, data2, time_range):
+def time_range_join(data1, data2, time_range=60):
     """Performs a range join based on indicated time plus/minus `time_range` buffer
 
     Parameters
@@ -190,7 +190,7 @@ def time_range_join(data1, data2, time_range):
 
     return df_range_join
 
-def haversine_dist_filter(dataframe, dist_max):
+def haversine_dist_filter(dataframe, dist_max=100):
     """Returns dataframe with filtered for distance between recorded points using haversine distance
 
     Parameters
@@ -248,17 +248,17 @@ def pairwise_filter(data1, data2, session_limit=600, detection_distance=100, det
     data1_epoch = standardize_epoch(data1)
     data2_epoch = standardize_epoch(data2)
 
-    data1_session_filter = session_length_filter(data1_epoch, session_limit)
-    data2_session_filter = session_length_filter(data2_epoch, session_limit)
+    data1_session_filter = session_length_filter(data1_epoch, session_max=session_limit)
+    data2_session_filter = session_length_filter(data2_epoch, session_max=session_limit)
     
     # appends column names to distinguish between the two datasets
     data1_suffix = data1_session_filter.add_suffix('1')
     data2_suffix = data2_session_filter.add_suffix('2')
 
     # range join includes filtering for time proximity of recorded event
-    df_range_join = time_range_join(data1_suffix, data2_suffix, detection_time)
+    df_range_join = time_range_join(data1_suffix, data2_suffix, time_range=detection_time)
 
-    candidate_pairs = haversine_dist_filter(df_range_join, detection_distance)
+    candidate_pairs = haversine_dist_filter(df_range_join, dist_max=detection_distance)
 
     return candidate_pairs
 
@@ -316,3 +316,17 @@ def npmi_data_filter(count_data, npmi_results, min_npmi=0.5):
     selected_data = pd.merge(count_data, pair_list, on=['element_id1', 'element_id2'])
 
     return selected_data
+
+def process_data(data1, data2, 
+    element_id1=None, timestamp1=None, session_start1=None, session_end1=None, boardings1=None, alightings1=None, lat1=None, lon1=None,
+    element_id2=None, timestamp2=None, session_start2=None, session_end2=None, boardings2=None, alightings2=None, lat2=None, lon2=None):
+    
+    df1 = csv_to_df(data1, element_id=element_id1, timestamp=timestamp1, session_start=session_start1, session_end=session_end1,
+                    boardings=boardings1, alightings=alightings1, lat=lat1, lon=lon1)
+    df2 = csv_to_df(data2, element_id=element_id2, timestamp=timestamp2, session_start=session_start2, session_end=session_end2,
+                    boardings=boardings2, alightings=alightings2, lat=lat2, lon=lon2)
+    paired = pairwise_filer(df1, df2)
+    npmi_results = npmi(paired)
+    likely_pairs = npmi_data_filter(paired, npmi_results)
+
+    return likely_pairs
