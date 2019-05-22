@@ -120,19 +120,22 @@ class LstmAutoEncoder(object):
         return zip(dist >= self.threshold, dist)
 
 def anomaly_detect(data):
-    """
+    """Takes a dictionary of location, data pairs containing a series of temporal sample and assesses likely
+    anomalous samples. The resulting dictionary can be used to identify locations and time periods of likely
+    anomalous data collection.
 
     Parameters
     ----------
-    data : dict of pandas DataFrames
+    data : dict
         Each key in the dictionary is a specific location with the value being a DataFrame of two time-series
         representing collected data from each source
 
 
     Returns
     -------
-    reconstruction_dict : dict of lists
-
+    reconstruction_dict : dict
+        Each key is the location and error threshold with the value being a list of the reconstruction error 
+        for each sample in the location
     """
     reconstruction_dict = {}
     for location, dataframe in data.items():

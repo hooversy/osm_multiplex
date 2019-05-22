@@ -212,6 +212,24 @@ def time_grouping(dataframe, interval='15T', time_selection='1'):
     return grouped_time
 
 def weekly_difference_dataframes(dataframe, interval='15T'):
+    """Generates a dictionary of dataframes with each k,v pair representing a location and the difference between the two
+    datasource counts.
+
+    Parameters
+    ----------
+    dataframe : pandas DataFrame
+        Contains count and difference values for all locations
+
+    interval : str
+        The time interval to be represented in the resulting dataframe. The default in 15 minutes, which results
+        in 672 entries for every week
+
+    Returns
+    -------
+    dataframes : dict
+        A dictionary of DataFrames with each k,v pair representing a location and the difference between the two
+        datasource counts.
+    """
     dataframes = {}
     
     for name, group in dataframe.groupby(['lat', 'lon']):
