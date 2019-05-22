@@ -17,6 +17,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda config --append channels conda-forge
+  - conda config --remove channels default
   - conda config --set channel_priority strict
   - conda create --name test-environment
   - source activate test-environment
