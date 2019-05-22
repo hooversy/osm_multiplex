@@ -245,3 +245,11 @@ def weekly_difference_dataframes(dataframe, interval='15T'):
         dataframes[location] = pivoted.iloc[1:-1] # removes likely incomplete first and last weeks
 
     return dataframes
+
+def preprocess(dataframe):
+    spatial_grouped = spatial_grouping(dataframe)
+    occupancy = occupancy_level(spatial_grouped)
+    time_grouped = time_grouping(occupancy)
+    preprocessed = weekly_difference_dataframes(time_grouped)
+
+    return preprocessed
