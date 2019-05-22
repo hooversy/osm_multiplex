@@ -31,10 +31,6 @@ install:
   - conda install pytables
   - conda install pandas
   - conda install scikit-learn
-  - conda install tensorflow=1.13.1 --no-deps
-  - conda install keras=2.2.4 --no-deps
-  - conda install tensorflow-estimator --no-deps
-  - conda install grpcio=1.16.0 --no-deps
   - conda info -a
   - conda list
 
