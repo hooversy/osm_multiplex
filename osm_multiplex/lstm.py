@@ -13,6 +13,8 @@ from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import numpy as np
 
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # modified LstmAutoEncoder class from reference for comparative time-series of mobility data
 class LstmAutoEncoder(object):
     model_name = 'lstm-auto-encoder'
@@ -131,7 +133,7 @@ def anomaly_detect(data):
     """
     reconstruction_dict = {}
     for location, dataframe in data.items():
-        model_dir_path = './models'
+        model_dir_path = os.path.join(THIS_DIR, './models')
         print(location + ' processing')
         np_data = dataframe.values
         scaler = MinMaxScaler()
