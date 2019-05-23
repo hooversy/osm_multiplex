@@ -1,5 +1,7 @@
+# third-party libraries
 from argparse import ArgumentParser
 
+# local imports
 from .osm_download import generate_multiplex
 from .count_data import process_data
 from .lstm_preprocessing import preprocess
@@ -180,5 +182,6 @@ elif args.anomaly_detect == True:
         )
     preprocessed = preprocess(likely_pairs)
     anomalies = anomaly_detect(preprocessed)
+    print(anomalies)
 else:
     raise Exception('No action specified')
