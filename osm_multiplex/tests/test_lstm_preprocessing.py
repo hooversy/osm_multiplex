@@ -1,5 +1,6 @@
 # third-party libraries
 import pandas as pd
+import pytest
 
 # local imports
 from .. import lstm_preprocessing
@@ -151,6 +152,21 @@ class TestDailyCumulative:
 
         assert test.equals(target)
 
+    def test_invalid_identifier(self):
+        """Tests if exception is raised when identifier parameter is not valid"""
+        data_list = [['bob2', 1519330080, 1519330081, 2, 1],
+                     ['bob2', 1519330085, 1519330086, 3, 0],
+                     ['bob2', 1519430080, 1519430081, 3, 1],
+                     ['bob2', 1519430085, 1519430086, 1, 2]]
+        target_list = [['bob2', '2018-02-22 20:08:00', '2018-02-22 20:08:01', 1],
+                       ['bob2', '2018-02-22 20:08:05', '2018-02-22 20:08:06', 4],
+                       ['bob2', '2018-02-23 23:54:40', '2018-02-23 23:54:41', 2],
+                       ['bob2', '2018-02-23 23:54:45', '2018-02-23 23:54:46', 1]]
+        data = pd.DataFrame(data_list, columns=['element_id2', 'session_start2', 'session_end2', 'boardings2', 'alightings2'])
+
+        with pytest.raises(Exception):
+            lstm_preprocessing.daily_cumulative(data, '3')
+
 class TestTimeGrouping:
     """Tests the grouping of records into specified time intervals"""
     def test_timestamp1_session2_interval15_selection1(self):
@@ -166,6 +182,22 @@ class TestTimeGrouping:
         target_multi = target.set_index(['time', 'lat', 'lon'])
 
         test = lstm_preprocessing.time_grouping(data, interval='15T', time_selection='1')
+
+        assert test.equals(target_multi)
+
+    def test_timestamp1_session2_interval15_selection2(self):
+        data_list = [[1519330080, 1519330090, 44.44, 55.55, 2, 3],
+                     [1519330081, 1519330030, 44.44, 55.55, 1, 4],
+                     [1519430080, 1519430090, 44.44, 55.55, 3, 2],
+                     [1519430081, 1519430030, 44.44, 55.55, 2, 6]]
+        target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7, 4],
+                       ['2018-02-23 23:45:00', 44.44, 55.55, 5, 8, 3]]
+        data = pd.DataFrame(data_list, columns=['timestamp1', 'session_start2', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+        target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2', 'difference'])
+        target['time'] =  pd.to_datetime(target['time'])
+        target_multi = target.set_index(['time', 'lat', 'lon'])
+
+        test = lstm_preprocessing.time_grouping(data, interval='15T', time_selection='2')
 
         assert test.equals(target_multi)
 
@@ -185,6 +217,22 @@ class TestTimeGrouping:
 
         assert test.equals(target_multi)
 
+    def test_session1_timestamp2_interval60_selection1(self):
+        data_list = [[1519330080, 1519330090, 44.44, 55.55, 2, 3],
+                     [1519330081, 1519330030, 44.44, 55.55, 1, 4],
+                     [1519430080, 1519430090, 44.44, 55.55, 3, 2],
+                     [1519430081, 1519430030, 44.44, 55.55, 2, 6]]
+        target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7, 4],
+                       ['2018-02-23 23:00:00', 44.44, 55.55, 5, 8, 3]]
+        data = pd.DataFrame(data_list, columns=['session_start1', 'timestamp2', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+        target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2', 'difference'])
+        target['time'] =  pd.to_datetime(target['time'])
+        target_multi = target.set_index(['time', 'lat', 'lon'])
+
+        test = lstm_preprocessing.time_grouping(data, interval='60T', time_selection='1')
+
+        assert test.equals(target_multi)
+
     def test_session1_timestamp2_interval30_selectionavg(self):
         data_list = [[1519330080, 1519330090, 44.44, 55.55, 2, 3],
                      [1519330081, 1519330030, 44.44, 55.55, 1, 4],
@@ -200,6 +248,32 @@ class TestTimeGrouping:
         test = lstm_preprocessing.time_grouping(data, interval='30T', time_selection='avg')
 
         assert test.equals(target_multi)
+
+    def test_timestamp1_session2_interval30_selectionavg(self):
+        data_list = [[1519330080, 1519330090, 44.44, 55.55, 2, 3],
+                     [1519330081, 1519330030, 44.44, 55.55, 1, 4],
+                     [1519430080, 1519430090, 44.44, 55.55, 3, 2],
+                     [1519430081, 1519430030, 44.44, 55.55, 2, 6]]
+        target_list = [['2018-02-22 20:00:00', 44.44, 55.55, 3, 7, 4],
+                       ['2018-02-23 23:30:00', 44.44, 55.55, 5, 8, 3]]
+        data = pd.DataFrame(data_list, columns=['timestamp1', 'session_start2', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+        target = pd.DataFrame(target_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2', 'difference'])
+        target['time'] =  pd.to_datetime(target['time'])
+        target_multi = target.set_index(['time', 'lat', 'lon'])
+
+        test = lstm_preprocessing.time_grouping(data, interval='30T', time_selection='avg')
+
+        assert test.equals(target_multi)
+
+    def test_invalid_time_selection(self):
+        data_list = [[1519330080, 1519330090, 44.44, 55.55, 2, 3],
+             [1519330081, 1519330030, 44.44, 55.55, 1, 4],
+             [1519430080, 1519430090, 44.44, 55.55, 3, 2],
+             [1519430081, 1519430030, 44.44, 55.55, 2, 6]]
+        data = pd.DataFrame(data_list, columns=['timestamp1', 'session_start2', 'lat', 'lon', 'occupancy1', 'occupancy2'])
+
+        with pytest.raises(Exception):
+            lstm_preprocessing.time_grouping(data, interval='30T', time_selection='3')
 
 class TestWeeklyDifferenceDataframes:
     def test_two_weeks(self):

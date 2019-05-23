@@ -27,6 +27,23 @@ class TestCsvToDf:
 
         assert pd.util.hash_pandas_object(test_df).sum() == -6761865716520410554
 
+    def test_timestamp_ba(self):
+        """
+        Check if a csv w/ a timestamp and grouped counts is properly converted to the desired DataFrame
+        """
+        data = os.path.join(THIS_DIR, 'test_timestamp_ba.csv')
+        element_id = 'tagID'
+        timestamp = 'timestamp'
+        boardings = 'boardings'
+        alightings = 'alightings'
+        lat = 'lat'
+        lon = 'lon'
+
+        test_df = count_data.csv_to_df(data, element_id=element_id, timestamp=timestamp,
+                                       boardings=boardings, alightings=alightings, lat=lat, lon=lon)
+
+        assert pd.util.hash_pandas_object(test_df).sum() == 7008548250528393651
+
     def test_session(self):
         """
         Check if a csv w/ session times is properly converted to the desired DataFrame
@@ -41,6 +58,24 @@ class TestCsvToDf:
         test_df = count_data.csv_to_df(data, element_id=element_id, session_start=session_start, session_end=session_end, lat=lat, lon=lon)
 
         assert pd.util.hash_pandas_object(test_df).sum() == 7098407329788286247
+
+    def test_session_ba(self):
+        """
+        Check if a csv w/ session times and grouped counts is properly converted to the desired DataFrame
+        """
+        data = os.path.join(THIS_DIR, 'test_session_ba.csv')
+        element_id = 'MacPIN'
+        session_start = 'SessionStart_Epoch'
+        session_end = 'SessionEnd_Epoch'
+        boardings = 'boardings'
+        alightings = 'alightings'
+        lat = 'GPS_LAT'
+        lon = 'GPS_LONG'
+
+        test_df = count_data.csv_to_df(data, element_id=element_id, session_start=session_start, session_end=session_end,
+                                       boardings=boardings, alightings=alightings, lat=lat, lon=lon)
+
+        assert pd.util.hash_pandas_object(test_df).sum() == 2589903708124850504
 
 class TestStandardizeDatetime:
     """
