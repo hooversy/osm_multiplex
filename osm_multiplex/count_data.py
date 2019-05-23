@@ -326,7 +326,11 @@ def process_data(data1, data2,
     df2 = csv_to_df(data2, element_id=element_id2, timestamp=timestamp2, session_start=session_start2, session_end=session_end2,
                     boardings=boardings2, alightings=alightings2, lat=lat2, lon=lon2)
     paired = pairwise_filer(df1, df2)
-    npmi_results = npmi(paired)
-    likely_pairs = npmi_data_filter(paired, npmi_results)
-
-    return likely_pairs
+    # if only individually identified data, then process for npmi tagging
+    if boardings1 == None and boarding2 == None:
+        npmi_results = npmi(paired)
+        likely_pairs = npmi_data_filter(paired, npmi_results)
+        return likely_pairs
+    # otherwise return all pairs that meet filter requirements without npmi assessment
+    else:
+        return paired
