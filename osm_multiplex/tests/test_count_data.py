@@ -212,7 +212,7 @@ class TestTimeRangeJoin:
 
         assert df_range_join.equals(target)
 
-    def test_d1session_d2timestame(self):
+    def test_d1session_d2timestamp(self):
         """
         Tests with data1 having session times and data2 having a timestamp
         """
