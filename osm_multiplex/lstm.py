@@ -64,7 +64,7 @@ class LstmAutoEncoder(object):
         return model_dir_path + '/' + LstmAutoEncoder.model_name + '-architecture.json'
 
     def fit(self, timeseries_dataset, model_dir_path, batch_size=None, epochs=None, validation_split=None, metric=None,
-            estimated_negative_sample_ratio=None):
+            std_dev_threshold=None):
         if batch_size is None:
             batch_size = 8
         if epochs is None:
@@ -73,8 +73,8 @@ class LstmAutoEncoder(object):
             validation_split = 0.2
         if metric is None:
             metric = 'mean_absolute_error'
-        if estimated_negative_sample_ratio is None:
-            estimated_negative_sample_ratio = 0.9
+        if std_dev_threshold is None:
+            std_dev_threshold = 1.5
 
         self.metric = metric
         self.time_window_size = timeseries_dataset.shape[1]
@@ -93,9 +93,7 @@ class LstmAutoEncoder(object):
         self.model.save_weights(weight_file_path)
 
         scores = self.predict(timeseries_dataset)
-        scores.sort()
-        cut_point = int(estimated_negative_sample_ratio * len(scores))
-        self.threshold = scores[cut_point]
+        self.threshold = np.mean(scores) + std_dev_threshold * np.std(scores)
 
         print('estimated threshold is ' + str(self.threshold))
 
@@ -149,7 +147,7 @@ def anomaly_detect(data):
         ae = LstmAutoEncoder()
 
         # fit the data and save model into model_dir_path
-        ae.fit(np_data[:, :], model_dir_path=model_dir_path, estimated_negative_sample_ratio=0.9)
+        ae.fit(np_data[:, :], model_dir_path=model_dir_path, std_dev_threshold=1.5)
 
         # load back the model saved in model_dir_path detect anomaly
         ae.load_model(model_dir_path)
