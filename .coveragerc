@@ -1,0 +1,6 @@
+[run]
+omit = 
+    *__init__*
+    *__main__*
+    *_version.py
+    *setup.py
