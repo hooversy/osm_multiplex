@@ -33,7 +33,7 @@ class LstmAutoEncoder(object):
     @staticmethod
     def create_model(time_window_size, metric):
         model = Sequential()
-        model.add(LSTM(units=128, input_shape=(time_window_size, 1), return_sequences=False))
+        model.add(LSTM(units=128, input_shape=(time_window_size, 3), return_sequences=False))
 
         model.add(Dense(units=time_window_size, activation='linear'))
 
@@ -79,14 +79,12 @@ class LstmAutoEncoder(object):
         self.metric = metric
         self.time_window_size = timeseries_dataset.shape[1]
 
-        input_timeseries_dataset = np.expand_dims(timeseries_dataset, axis=2)
-
         weight_file_path = LstmAutoEncoder.get_weight_file(model_dir_path=model_dir_path)
         architecture_file_path = LstmAutoEncoder.get_architecture_file(model_dir_path)
         checkpoint = ModelCheckpoint(weight_file_path)
         self.model = LstmAutoEncoder.create_model(self.time_window_size, metric=self.metric)
         open(architecture_file_path, 'w').write(self.model.to_json())
-        self.model.fit(x=input_timeseries_dataset, y=timeseries_dataset,
+        self.model.fit(x=timeseries_dataset, y=timeseries_dataset[:,:,2],
                        batch_size=batch_size, epochs=epochs,
                        verbose=LstmAutoEncoder.VERBOSE, validation_split=validation_split,
                        callbacks=[checkpoint])
@@ -105,9 +103,8 @@ class LstmAutoEncoder(object):
         np.save(config_file_path, self.config)
 
     def predict(self, timeseries_dataset):
-        input_timeseries_dataset = np.expand_dims(timeseries_dataset, axis=2)
-        target_timeseries_dataset = self.model.predict(x=input_timeseries_dataset)
-        dist = np.linalg.norm(timeseries_dataset - target_timeseries_dataset, axis=-1)
+        target_timeseries_dataset = self.model.predict(x=timeseries_dataset)
+        dist = np.linalg.norm(timeseries_dataset[:,:,2] - target_timeseries_dataset, axis=-1)
         return dist
 
     def anomaly(self, timeseries_dataset, threshold=None):
@@ -139,22 +136,29 @@ def anomaly_detect(data):
     for location, dataframe in data.items():
         model_dir_path = os.path.join(THIS_DIR, './models')
         print(location + ' processing')
-        np_data = dataframe.values
+        samples = len(dataframe.index.codes[0])
+        timesteps = len(dataframe.columns.levels[1])
+        np_data_o1 = dataframe[['occupancy1']].values
+        np_data_o2 = dataframe[['occupancy2']].values
+        np_data_diff = np.abs(np_data_o1 - np_data_o2)
         scaler = MinMaxScaler()
-        np_data = scaler.fit_transform(np_data)
+        np_data_o1 = scaler.fit_transform(np_data_o1)
+        np_data_o2 = scaler.fit_transform(np_data_o2)
+        np_data_diff = scaler.fit_transform(np_data_diff)
+        np_data = np.stack((np_data_o1, np_data_o2, np_data_diff), axis=-1)
         print(np_data.shape)
 
         ae = LstmAutoEncoder()
 
         # fit the data and save model into model_dir_path
-        ae.fit(np_data[:, :], model_dir_path=model_dir_path, std_dev_threshold=1.5)
+        ae.fit(np_data[:, :, :], model_dir_path=model_dir_path, std_dev_threshold=1.5)
 
         # load back the model saved in model_dir_path detect anomaly
         ae.load_model(model_dir_path)
-        anomaly_information = ae.anomaly(np_data[:, :])
+        anomaly_information = ae.anomaly(np_data[:, :, :])
         reconstruction_error = []
         for idx, (is_anomaly, dist) in enumerate(anomaly_information):
-            print('# ' + str(idx) + ' is ' + ('abnormal' if is_anomaly else 'normal') + ' (dist: ' + str(dist) + ')')
+            #print('# ' + str(idx) + ' is ' + ('abnormal' if is_anomaly else 'normal') + ' (dist: ' + str(dist) + ')')
             reconstruction_error.append(dist)
         reconstruction_dict[str(location) + "_" + str(ae.threshold)] = reconstruction_error
 
