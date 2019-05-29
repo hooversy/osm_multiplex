@@ -210,7 +210,7 @@ def time_grouping(dataframe, interval='15T', time_selection='1'):
 
     return grouped_time
 
-def weekly_difference_dataframes(dataframe, interval='15T'):
+def weekly_dataframes(dataframe, interval='15T'):
     """Generates a dictionary of dataframes with each k,v pair representing a location and the difference between the two
     datasource counts.
 
@@ -249,6 +249,6 @@ def preprocess(dataframe):
     spatial_grouped = spatial_grouping(dataframe)
     occupancy = occupancy_level(spatial_grouped)
     time_grouped = time_grouping(occupancy)
-    preprocessed = weekly_difference_dataframes(time_grouped)
+    preprocessed = weekly_dataframes(time_grouped)
 
     return preprocessed
