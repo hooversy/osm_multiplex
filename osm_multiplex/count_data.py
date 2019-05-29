@@ -6,6 +6,7 @@
 
 import numpy as np
 import pandas as pd
+import sqlite3
 
 def csv_to_df(data, element_id=None, timestamp=None, session_start=None, session_end=None,
               boardings=None, alightings=None, lat=None, lon=None):
@@ -116,7 +117,9 @@ def standardize_epoch(dataframe):
     for time in time_list:
         try:
             if dataframe[time].dtype != 'int64':
-                dataframe[time] = dataframe[time].astype(np.int64) // 10**9
+                dataframe[time] = dataframe[time].astype(np.int64)
+                if dataframe[time] > 10000000000:
+                    dataframe[time] = dataframe[time] // 10**9
         except:
             pass
 
@@ -148,8 +151,9 @@ def session_length_filter(dataframe, session_max=600):
 
     return filtered_dataframe
 
-def time_range_join(data1, data2, time_range=60):
-    """Performs a range join based on indicated time plus/minus `time_range` buffer
+def time_range_join_np(data1, data2, time_range=60):
+    """Performs a range join based on indicated time plus/minus `time_range` buffer. This approach is quick and leverages
+    numpy, but may fail on larger datasets due to exceeding memory limits
 
     Parameters
     ----------
@@ -189,6 +193,98 @@ def time_range_join(data1, data2, time_range=60):
     df_range_join = df_range_join_objects.infer_objects()
 
     return df_range_join
+
+def time_range_join_sql(data1, data2, time_range=60):
+    """Performs a range join based on indicated time plus/minus `time_range` buffer. This function uses the SQL API, which is
+    much slower than the numpy based approach, but it more memory efficient so will work on larger datasets where the numpy 
+    approach may quickly exceed available memory and fail
+
+    Parameters
+    ----------
+    data1 : pandas DataFrame
+        DataFrame of the first dataset
+
+    data2 : pandas DataFrame
+        DataFrame of the second dataset
+
+    time_range : int
+        Value for time buffer indicating range in join
+    
+    Returns
+    -------
+    df_range_join : pandas DataFrame
+        DataFrame with a range join of the two datasets based on time
+    """
+    try:
+        data1['time'] = data1['timestamp1']
+    except:
+        data1['time'] = data1['session_start1']
+
+    try:
+        data2['time'] = data2['timestamp2']
+    except:
+        data2['time'] = data2['session_start2']
+
+    data2['time_high'] = data2['time'] + time_range
+    data2['time_low'] = data2['time'] - time_range
+    data2 = data2.drop(columns=['time'])
+
+    conn = sqlite3.connect(':memory:')
+
+    data1.to_sql('data1', conn, index=False)
+    data2.to_sql('data2', conn, index=False)
+
+    qry = '''
+        select
+            *
+        from
+            data1 join data2 on
+            time between time_low and time_high
+          '''
+
+    df_range_join = pd.read_sql_query(qry, conn).drop(columns=['time', 'time_high', 'time_low'])
+
+    return df_range_join
+
+# def time_range_join_intervalindex(data1, data2, time_range=60):
+#     """Performs a range join based on indicated time plus/minus `time_range` buffer. This is an attempt to use interval
+#     indexing that exists in pandas, but for the moment can only serve as a merge and not a join so multiple records matches
+#     don't get their full representation
+
+#     Parameters
+#     ----------
+#     data1 : pandas DataFrame
+#         DataFrame of the first dataset
+
+#     data2 : pandas DataFrame
+#         DataFrame of the second dataset
+
+#     time_range : int
+#         Value for time buffer indicating range in join
+    
+#     Returns
+#     -------
+#     df_range_join : pandas DataFrame
+#         DataFrame with a range join of the two datasets based on time
+#     """
+#     try:
+#         data1['time'] = data1['timestamp1']
+#     except:
+#         data1['time'] = data1['session_start1']
+
+#     try:
+#         data2['time'] = data2['timestamp2']
+#     except:
+#         data2['time'] = data2['session_start2']
+
+#     data2['time_high'] = data2['time'] + time_range
+#     data2['time_low'] = data2['time'] - time_range
+#     data2 = data2.drop(columns=['time'])
+
+#     time_range = pd.IntervalIndex.from_arrays(data2.time_low, data2.time_high, 'both')
+#     df_range_join = ######
+
+#     return df_range_join
 
 def haversine_dist_filter(dataframe, dist_max=100):
     """Returns dataframe with filtered for distance between recorded points using haversine distance
@@ -256,7 +352,7 @@ def pairwise_filter(data1, data2, session_limit=600, detection_distance=100, det
     data2_suffix = data2_session_filter.add_suffix('2')
 
     # range join includes filtering for time proximity of recorded event
-    df_range_join = time_range_join(data1_suffix, data2_suffix, time_range=detection_time)
+    df_range_join = time_range_join_sql(data1_suffix, data2_suffix, time_range=detection_time)
 
     candidate_pairs = haversine_dist_filter(df_range_join, dist_max=detection_distance)
 
@@ -325,7 +421,7 @@ def process_data(data1, data2,
                     boardings=boardings1, alightings=alightings1, lat=lat1, lon=lon1)
     df2 = csv_to_df(data2, element_id=element_id2, timestamp=timestamp2, session_start=session_start2, session_end=session_end2,
                     boardings=boardings2, alightings=alightings2, lat=lat2, lon=lon2)
-    paired = pairwise_filer(df1, df2)
+    paired = pairwise_filter(df1, df2)
     # if only individually identified data, then process for npmi tagging
     if boardings1 == None and boarding2 == None:
         npmi_results = npmi(paired)
