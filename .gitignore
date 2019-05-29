@@ -105,7 +105,7 @@ venv.bak/
 .DS_Store
 
 # local data stores
-data/*
+*/data/*
 *.npy
 *.h5
-networks/*
+*/networks/*
