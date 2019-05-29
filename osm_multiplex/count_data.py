@@ -118,7 +118,7 @@ def standardize_epoch(dataframe):
         try:
             if dataframe[time].dtype != 'int64':
                 dataframe[time] = dataframe[time].astype(np.int64)
-                if dataframe[time] > 10000000000:
+                if dataframe[time][0] > 10000000000:
                     dataframe[time] = dataframe[time] // 10**9
         except:
             pass
@@ -282,7 +282,9 @@ def time_range_join_sql(data1, data2, time_range=60):
 #     data2 = data2.drop(columns=['time'])
 
 #     time_range = pd.IntervalIndex.from_arrays(data2.time_low, data2.time_high, 'both')
-#     df_range_join = ######
+#     data1_interval = data1.set_index('time')
+#     data2_interval = data2.set_index(time_range)
+#     df_range_join = # can't join w/ int and interval type indexes
 
 #     return df_range_join
 
