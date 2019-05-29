@@ -189,11 +189,11 @@ class TestSessionLengthFilter:
 
         assert filtered_test_df.equals(test_df)
 
-class TestTimeRangeJoin:
+class TestTimeRangeJoinNp:
     """
     Tests range joining two dataframes based on time
     """
-    def test_d1timestamp_d2session(self):
+    def test_d1timestamp_d2session_np(self):
         """
         Tests with data1 having a timestamp and data2 having session times
         """
@@ -208,11 +208,11 @@ class TestTimeRangeJoin:
         data2 = pd.DataFrame(data2_list, columns=['session_start2', 'session_end2', 'name2'])
         target = pd.DataFrame(target_list, columns=['timestamp1', 'name1', 'session_start2', 'session_end2', 'name2'])
 
-        df_range_join = count_data.time_range_join(data1, data2, time_range)
+        df_range_join = count_data.time_range_join_np(data1, data2, time_range)
 
         assert df_range_join.equals(target)
 
-    def test_d1session_d2timestamp(self):
+    def test_d1session_d2timestamp_np(self):
         """
         Tests with data1 having session times and data2 having a timestamp
         """
@@ -227,7 +227,49 @@ class TestTimeRangeJoin:
         data2 = pd.DataFrame(data2_list, columns=['timestamp2', 'name2'])
         target = pd.DataFrame(target_list, columns=['session_start1', 'session_end1', 'name1', 'timestamp2', 'name2'])
 
-        df_range_join = count_data.time_range_join(data1, data2, time_range)
+        df_range_join = count_data.time_range_join_np(data1, data2, time_range)
+
+        assert df_range_join.equals(target)
+
+class TestTimeRangeJoinSql:
+    """
+    Tests range joining two dataframes based on time
+    """
+    def test_d1timestamp_d2session_sql(self):
+        """
+        Tests with data1 having a timestamp and data2 having session times
+        """
+        time_range = 100
+        data1_list = [[1519330080, 'bob1'], [1519330030, 'bob1'], [1518200760, 'sue1']]
+        data2_list = [[1519330050, 1519330150, 'bob2'], [1518200780, 1518200980, 'sue2'], [1529200760, 1529200790, 'earl2']]
+        target_list = [[1519330080, 'bob1', 1519330050, 1519330150, 'bob2'],
+                       [1519330030, 'bob1', 1519330050, 1519330150, 'bob2'],
+                       [1518200760, 'sue1', 1518200780, 1518200980, 'sue2']]
+
+        data1 = pd.DataFrame(data1_list, columns=['timestamp1', 'name1'])
+        data2 = pd.DataFrame(data2_list, columns=['session_start2', 'session_end2', 'name2'])
+        target = pd.DataFrame(target_list, columns=['timestamp1', 'name1', 'session_start2', 'session_end2', 'name2'])
+
+        df_range_join = count_data.time_range_join_sql(data1, data2, time_range)
+
+        assert df_range_join.equals(target)
+
+    def test_d1session_d2timestamp_sql(self):
+        """
+        Tests with data1 having session times and data2 having a timestamp
+        """
+        time_range = 100
+        data1_list = [[1519330050, 1519330150, 'bob1'], [1518200780, 1518200980, 'sue1'], [1529200760, 1529200790, 'earl1']]
+        data2_list = [[1519330080, 'bob2'], [1519330030, 'bob2'], [1518200760, 'sue2']]
+        target_list = [[1519330050, 1519330150, 'bob1', 1519330080, 'bob2'],
+                       [1519330050, 1519330150, 'bob1', 1519330030, 'bob2'],
+                       [1518200780, 1518200980, 'sue1', 1518200760, 'sue2']]
+
+        data1 = pd.DataFrame(data1_list, columns=['session_start1', 'session_end1', 'name1'])
+        data2 = pd.DataFrame(data2_list, columns=['timestamp2', 'name2'])
+        target = pd.DataFrame(target_list, columns=['session_start1', 'session_end1', 'name1', 'timestamp2', 'name2'])
+
+        df_range_join = count_data.time_range_join_sql(data1, data2, time_range)
 
         assert df_range_join.equals(target)
 

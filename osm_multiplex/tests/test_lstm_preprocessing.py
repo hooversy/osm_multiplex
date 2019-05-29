@@ -299,7 +299,7 @@ class TestWeeklyDifferenceDataframes:
         data['time'] =  pd.to_datetime(data['time'])
         data_multi = data.set_index(['time', 'lat', 'lon'])
 
-        test = lstm_preprocessing.weekly_difference_dataframes(data_multi)
+        test = lstm_preprocessing.weekly_dataframes(data_multi)
 
         assert test != None # need a better assertion, but can't find how to hash a dictionary of dataframes
 
