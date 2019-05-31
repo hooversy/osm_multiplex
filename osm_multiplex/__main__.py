@@ -169,12 +169,19 @@ parser.add_argument('-lon2', '--longitude2',
                     help='Longitude for dataset2'
                     )
 
+parser.add_argument('-np', '--npmi',
+                    dest='npmi',
+                    action='store_true',
+                    required=False,
+                    help='Filter datasets using NMPI'
+                    )
+
 args = parser.parse_args()
 
 if args.graph == True:
     multiplex = generate_multiplex(args.graph_area, args.graph_modes)
 elif args.anomaly_detect == True:
-    likely_pairs = process_data(args.dataset1, args.dataset2,
+    likely_pairs = process_data(args.dataset1, args.dataset2, run_npmi=args.npmi,
         element_id1=args.element_id1, timestamp1=args.timestamp1, session_start1=args.session_start1, session_end1=args.session_end1,
         boardings1=args.boardings1, alightings1=args.alightings1, lat1=args.latitude1, lon1=args.longitude1,
         element_id2=args.element_id2, timestamp2=args.timestamp2, session_start2=args.session_start2, session_end2=args.session_end2,
