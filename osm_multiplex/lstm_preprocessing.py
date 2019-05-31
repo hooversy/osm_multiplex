@@ -8,8 +8,8 @@ import osmnx as ox
 import numpy as np
 
 # local imports
-from . import count_data
-from . import osm_download
+import count_data
+import osm_download
 
 def spatial_grouping(dataframe, location_selection='1', mode='all'):
     """Assigns a single location to the data records. The data records can choose the location of dataset 1,
@@ -229,11 +229,12 @@ def weekly_dataframes(dataframe, interval='15T'):
         A dictionary of DataFrames with each k,v pair representing a location and the difference between the two
         datasource counts.
     """
-    dataframes = {}
+    grouped_dataframes = {}
+    pivoted_dataframes = {}
     
     for name, group in dataframe.groupby(['lat', 'lon']):
-        dataframes['location' + str(name)] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
-    for location, counts in dataframes.items():
+        grouped_dataframes['location' + str(name)] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
+    for location, counts in grouped_dataframes.items():
         gaps_filled = counts[['occupancy1', 'occupancy2']].asfreq(freq=interval, method='pad').reset_index(drop=False)
         pivoted = pd.pivot_table(gaps_filled,
                                  index=[gaps_filled['time'].dt.year, gaps_filled['time'].dt.week],
@@ -241,9 +242,11 @@ def weekly_dataframes(dataframe, interval='15T'):
                                  values=['occupancy1', 'occupancy2'],
                                  aggfunc='sum')
         pivoted.index.names = ['year', 'week']
-        dataframes[location] = pivoted.iloc[1:-1] # removes likely incomplete first and last weeks
+        useful_data = pivoted.iloc[1:-1] # removes likely incomplete first and last weeks
+        if not useful_data.empty:
+            pivoted_dataframes[location] = useful_data
 
-    return dataframes
+    return pivoted_dataframes
 
 def preprocess(dataframe):
     spatial_grouped = spatial_grouping(dataframe)
