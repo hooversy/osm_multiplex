@@ -11,7 +11,7 @@ import sys
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, 'osm_multiplex', '_version.py')) as version_file:
+with open(path.join(here, '_version.py')) as version_file:
     exec(version_file.read())
 
 with open(path.join(here, 'README.md')) as readme_file:
@@ -23,7 +23,7 @@ with open(path.join(here, 'CHANGELOG.md')) as changelog_file:
 #with open(path.join(here, 'CITATION.md')) as citation_file:
 #    citation = citation_file.read()
 
-long_description = readme + '\n\n' + changelog + '\n\n' + citation
+long_description = readme + '\n\n' + changelog# + '\n\n' + citation
 
 install_requires = [
     'numpy',
