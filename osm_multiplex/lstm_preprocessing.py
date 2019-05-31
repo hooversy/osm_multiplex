@@ -243,7 +243,7 @@ def weekly_dataframes(dataframe, interval='15T'):
                                  aggfunc='sum')
         pivoted.index.names = ['year', 'week']
         useful_data = pivoted.iloc[1:-1] # removes likely incomplete first and last weeks
-        if not useful_data.empty:
+        if not (useful_data.empty or useful_data.shape[0]<5):
             pivoted_dataframes[location] = useful_data
 
     return pivoted_dataframes
