@@ -425,7 +425,7 @@ def process_data(data1, data2, run_npmi=False,
                     boardings=boardings2, alightings=alightings2, lat=lat2, lon=lon2)
     paired = pairwise_filter(df1, df2)
     # if only individually identified data, then process for npmi tagging
-    if run_npmi=True:
+    if run_npmi==True:
         npmi_results = npmi(paired)
         likely_pairs = npmi_data_filter(paired, npmi_results)
         return likely_pairs
