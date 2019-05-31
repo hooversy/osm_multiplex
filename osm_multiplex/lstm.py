@@ -156,10 +156,12 @@ def anomaly_detect(data):
         # load back the model saved in model_dir_path detect anomaly
         ae.load_model(model_dir_path)
         anomaly_information = ae.anomaly(np_data[:, :, :])
-        reconstruction_error = []
+        reconstruction_error = {}
+        reconstruction_error['threshold'] = ae.threshold
+        years = list(dataframe.index.get_level_values(0))
+        weeks = list(dataframe.index.get_level_values(1))
         for idx, (is_anomaly, dist) in enumerate(anomaly_information):
-            #print('# ' + str(idx) + ' is ' + ('abnormal' if is_anomaly else 'normal') + ' (dist: ' + str(dist) + ')')
-            reconstruction_error.append(dist)
-        reconstruction_dict[str(location) + "_" + str(ae.threshold)] = reconstruction_error
+            reconstruction_error[str(years[idx]) + ', ' +str(weeks[idx])] = [is_anomaly, dist]
+        reconstruction_dict[location] = reconstruction_error
 
     return reconstruction_dict
