@@ -1,0 +1,327 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Count Data &#8212; OSMmp 0.1.0a0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="LSTM" href="lstm.html" />
+    <link rel="prev" title="Welcome to OSMmp’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-osm_multiplex.count_data">
+<span id="count-data"></span><h1>Count Data<a class="headerlink" href="#module-osm_multiplex.count_data" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">members</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<dl class="function">
+<dt id="osm_multiplex.count_data.csv_to_df">
+<code class="descclassname">osm_multiplex.count_data.</code><code class="descname">csv_to_df</code><span class="sig-paren">(</span><em>data</em>, <em>element_id=None</em>, <em>timestamp=None</em>, <em>session_start=None</em>, <em>session_end=None</em>, <em>boardings=None</em>, <em>alightings=None</em>, <em>lat=None</em>, <em>lon=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/count_data.html#csv_to_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.count_data.csv_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Imports counter data as csv and creates pandas dataframe</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – File path of counter date</p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Header of id column</p></li>
+<li><p><strong>timestamp</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Header of timestamp column. Optional if session times are used.</p></li>
+<li><p><strong>session_start</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Header of session start time column. Optional if timestamp is used.</p></li>
+<li><p><strong>session_end</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Header of session end time column. Optional if timestamp is used.</p></li>
+<li><p><strong>boardings</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – For grouped data, count of number boarding vehicle</p></li>
+<li><p><strong>alightings</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – For grouped data, count of number alighting vehicle</p></li>
+<li><p><strong>lat</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Header of latitude column.</p></li>
+<li><p><strong>lon</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Header of longitude column.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>df_fixed_headers</strong> – DataFrame of counter data with headers set for further processing</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.count_data.haversine_dist_filter">
+<code class="descclassname">osm_multiplex.count_data.</code><code class="descname">haversine_dist_filter</code><span class="sig-paren">(</span><em>dataframe</em>, <em>dist_max=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/count_data.html#haversine_dist_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.count_data.haversine_dist_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns dataframe with filtered for distance between recorded points using haversine distance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – DataFrame of the recorded candidate pairs</p></li>
+<li><p><strong>dist_max</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – Maximum distance between records</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>df_dist</strong> – DataFrame filtered for only records within defined distance</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.count_data.npmi">
+<code class="descclassname">osm_multiplex.count_data.</code><code class="descname">npmi</code><span class="sig-paren">(</span><em>dataframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/count_data.html#npmi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.count_data.npmi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a dataset with identifiers and calculates the Normalize Pointwise Mutual Information value
+for every pair of identifiers</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – DataFrame of the candidate identifiers</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>npmi</strong> – DataFrame of NMPI values for all pairs</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.count_data.npmi_data_filter">
+<code class="descclassname">osm_multiplex.count_data.</code><code class="descname">npmi_data_filter</code><span class="sig-paren">(</span><em>count_data</em>, <em>npmi_results</em>, <em>min_npmi=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/count_data.html#npmi_data_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.count_data.npmi_data_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns only data records where the npmi for the id pair exceeds a minimum threshold</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>count_data</strong> (<em>pandas DataFrame</em>) – Records of candidate pairs likely output from pairwise_filer</p></li>
+<li><p><strong>npmi_results</strong> (<em>pandas DataFrame</em>) – All the pairs of identifiers and their respective nmpi values from candidate pairs</p></li>
+<li><p><strong>min_nmpi</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><em>float</em></a>) – Threshold for accepted pairs recognizing “-1 for never occurring together,
+0 for independence, and +1 for complete co-occurrence.”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>selected_data</strong> – Only the records of identifier pairs that exceed the npmi threshold</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.count_data.pairwise_filter">
+<code class="descclassname">osm_multiplex.count_data.</code><code class="descname">pairwise_filter</code><span class="sig-paren">(</span><em>data1</em>, <em>data2</em>, <em>session_limit=600</em>, <em>detection_distance=100</em>, <em>detection_time=60</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/count_data.html#pairwise_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.count_data.pairwise_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes two datasets with identifiers to range join and filter to produce a list of probable joint identifiers</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data1</strong> (<em>pandas DataFrame</em>) – DataFrame of the first dataset</p></li>
+<li><p><strong>data2</strong> (<em>pandas DataFrame</em>) – DataFrame of the second dataset</p></li>
+<li><p><strong>session_limit</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – For records with session times, the maximum amount of time in seconds for a session to have occurred.
+This is to filter for only sessions while in transit</p></li>
+<li><p><strong>detection_distance</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – The maximum distance in meters for two detections to have occurred</p></li>
+<li><p><strong>detection_time</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – The maximum time difference in the initial recording of a detection</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>candidate_pairs</strong> – DataFrame of possible shared identifiers</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.count_data.session_length_filter">
+<code class="descclassname">osm_multiplex.count_data.</code><code class="descname">session_length_filter</code><span class="sig-paren">(</span><em>dataframe</em>, <em>session_max=600</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/count_data.html#session_length_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.count_data.session_length_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>If dataset has start and stop times for a session, filters out sessions exceeding max defined length</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – DataFrame of all the records including single timestamp and session duration</p></li>
+<li><p><strong>session_max</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – The max length of a session in seconds to be included as a mobility candidate session</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>filtered_dataframe</strong> – DataFrame with all the records with a single timestamp and those with sessions shorter than defined
+by <cite>session_max</cite></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.count_data.standardize_datetime">
+<code class="descclassname">osm_multiplex.count_data.</code><code class="descname">standardize_datetime</code><span class="sig-paren">(</span><em>dataframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/count_data.html#standardize_datetime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.count_data.standardize_datetime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts epoch times to datetime format. The import of the csv infers datetime format except in the
+case of epoch times. If epoch times are present, this converts them to datetime.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – DataFrame of the imported csv potentially with epoch times</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>dataframe</strong> – DataFrame with all times now datetime format</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.count_data.standardize_epoch">
+<code class="descclassname">osm_multiplex.count_data.</code><code class="descname">standardize_epoch</code><span class="sig-paren">(</span><em>dataframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/count_data.html#standardize_epoch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.count_data.standardize_epoch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts datetimes times to unix time format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – DataFrame of the imported csv potentially with datetimes</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>dataframe</strong> – DataFrame with all times now unix time int64 format</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.count_data.time_range_join_np">
+<code class="descclassname">osm_multiplex.count_data.</code><code class="descname">time_range_join_np</code><span class="sig-paren">(</span><em>data1</em>, <em>data2</em>, <em>time_range=60</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/count_data.html#time_range_join_np"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.count_data.time_range_join_np" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a range join based on indicated time plus/minus <cite>time_range</cite> buffer. This approach is quick and leverages
+numpy, but may fail on larger datasets due to exceeding memory limits</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data1</strong> (<em>pandas DataFrame</em>) – DataFrame of the first dataset</p></li>
+<li><p><strong>data2</strong> (<em>pandas DataFrame</em>) – DataFrame of the second dataset</p></li>
+<li><p><strong>time_range</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – Value for time buffer indicating range in join</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>df_range_join</strong> – DataFrame with a range join of the two datasets based on time</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.count_data.time_range_join_sql">
+<code class="descclassname">osm_multiplex.count_data.</code><code class="descname">time_range_join_sql</code><span class="sig-paren">(</span><em>data1</em>, <em>data2</em>, <em>time_range=60</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/count_data.html#time_range_join_sql"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.count_data.time_range_join_sql" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a range join based on indicated time plus/minus <cite>time_range</cite> buffer. This function uses the SQL API, which is
+much slower than the numpy based approach, but it more memory efficient so will work on larger datasets where the numpy
+approach may quickly exceed available memory and fail</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data1</strong> (<em>pandas DataFrame</em>) – DataFrame of the first dataset</p></li>
+<li><p><strong>data2</strong> (<em>pandas DataFrame</em>) – DataFrame of the second dataset</p></li>
+<li><p><strong>time_range</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – Value for time buffer indicating range in join</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>df_range_join</strong> – DataFrame with a range join of the two datasets based on time</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">OSMmp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Count Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lstm.html">LSTM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lstm_preprocessing.html">LSTM Preprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="osm_download.html">OSM Download</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to OSMmp’s documentation!</a></li>
+      <li>Next: <a href="lstm.html" title="next chapter">LSTM</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Sylvan Hoover.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/count_data.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

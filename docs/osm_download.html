@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>OSM Download &#8212; OSMmp 0.1.0a0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="LSTM Preprocessing" href="lstm_preprocessing.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-osm_multiplex.osm_download">
+<span id="osm-download"></span><h1>OSM Download<a class="headerlink" href="#module-osm_multiplex.osm_download" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">members</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<dl class="function">
+<dt id="osm_multiplex.osm_download.download_osm_layer">
+<code class="descclassname">osm_multiplex.osm_download.</code><code class="descname">download_osm_layer</code><span class="sig-paren">(</span><em>area</em>, <em>mode</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/osm_download.html#download_osm_layer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.osm_download.download_osm_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download a single-mode layer from OSM</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>area</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – String of geocoded place or list of [north, south, east, west]</p></li>
+<li><p><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Mode choice of  {‘walk’, ‘bike’, ‘drive’, ‘drive_service’, ‘all’, ‘all_private’, ‘none’}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>layer</strong> – OSM map layer of specific mode</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>networkx multidigraph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.osm_download.generate_multiplex">
+<code class="descclassname">osm_multiplex.osm_download.</code><code class="descname">generate_multiplex</code><span class="sig-paren">(</span><em>area</em>, <em>modes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/osm_download.html#generate_multiplex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.osm_download.generate_multiplex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create multiplex transportation network graph from OSM</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>area</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – String of geocoded place or list of [north, south, east, west]</p></li>
+<li><p><strong>modes</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – Modes included in multiplex graph</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>multiplex</strong> – Multiplex graph of merged OSM layers for all specified modes</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>networkx multidigraph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.osm_download.merge_multiplex_nodes">
+<code class="descclassname">osm_multiplex.osm_download.</code><code class="descname">merge_multiplex_nodes</code><span class="sig-paren">(</span><em>multiplex_separated</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/osm_download.html#merge_multiplex_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.osm_download.merge_multiplex_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>In the multiplex graph, each mode has its own layer of nodes and edges. Nodes are
+represented by a mode prefix and a node number. In order to allow inter-mode movement,
+a zero-cost edge needs to be created between co-located nodes for different modes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>multiplex_separated</strong> (<em>networkx multidigraph</em>) – Multiplex network w/ each mode in an isolated layer</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>multiplex_connected</strong> – Multiplex network with co-located nodes connected</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>networkx multidigraph</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">OSMmp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="count_data.html">Count Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lstm.html">LSTM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lstm_preprocessing.html">LSTM Preprocessing</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">OSM Download</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="lstm_preprocessing.html" title="previous chapter">LSTM Preprocessing</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Sylvan Hoover.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/osm_download.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

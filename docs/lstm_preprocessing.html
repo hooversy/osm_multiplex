@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>LSTM Preprocessing &#8212; OSMmp 0.1.0a0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="OSM Download" href="osm_download.html" />
+    <link rel="prev" title="LSTM" href="lstm.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-osm_multiplex.lstm_preprocessing">
+<span id="lstm-preprocessing"></span><h1>LSTM Preprocessing<a class="headerlink" href="#module-osm_multiplex.lstm_preprocessing" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">members</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<dl class="function">
+<dt id="osm_multiplex.lstm_preprocessing.assign_osm">
+<code class="descclassname">osm_multiplex.lstm_preprocessing.</code><code class="descname">assign_osm</code><span class="sig-paren">(</span><em>dataframe</em>, <em>mode='all'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/lstm_preprocessing.html#assign_osm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.lstm_preprocessing.assign_osm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assigns an OSM node by taking the average location of the two datasets and finding the nearest node present in the
+mode layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – The data records to be used to find the nearest OSM node</p></li>
+<li><p><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Mode choice of  {‘walk’, ‘bike’, ‘drive’, ‘drive_service’, ‘all’, ‘all_private’, ‘none’}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>df_osm_location</strong> – Data records with the OSM ID of the nearest node and its respective lat/lon</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.lstm_preprocessing.daily_cumulative">
+<code class="descclassname">osm_multiplex.lstm_preprocessing.</code><code class="descname">daily_cumulative</code><span class="sig-paren">(</span><em>dataframe</em>, <em>identifier</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/lstm_preprocessing.html#daily_cumulative"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.lstm_preprocessing.daily_cumulative" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cumulative daily sum of boardings and alightings to indicate vehicle occupancy. Currently lacks any
+tuning or preprocessing, but that can be implemented in later versions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – Records with at least one dataset being grouped</p></li>
+<li><p><strong>identifier</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – <dl class="simple">
+<dt>Indicates which dataset is the grouped data over which the cumulative occupancy is to be calculated</dt><dd><ul>
+<li><p>‘1’ : Calculate for dataset 1</p></li>
+<li><p>‘2’ : Calculate for dataset 2</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>sum_occupancy</strong> – Dataframe with one dataset’s boardings/alightings replaced by occupancy</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.lstm_preprocessing.occupancy_level">
+<code class="descclassname">osm_multiplex.lstm_preprocessing.</code><code class="descname">occupancy_level</code><span class="sig-paren">(</span><em>dataframe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/lstm_preprocessing.html#occupancy_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.lstm_preprocessing.occupancy_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the count to be attributed to a record. If connected to an individual, then should be assigned
+a value of 1. If grouped boardings and alightings, then a running sum of boardings and alightings
+will be used to determine occupancy</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – Records either containing individuals or grouped data</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>dataframe</strong> – Records that now include an occupancy value indicative of the presence that detected by that system</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.lstm_preprocessing.spatial_grouping">
+<code class="descclassname">osm_multiplex.lstm_preprocessing.</code><code class="descname">spatial_grouping</code><span class="sig-paren">(</span><em>dataframe</em>, <em>location_selection='1'</em>, <em>mode='all'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/lstm_preprocessing.html#spatial_grouping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.lstm_preprocessing.spatial_grouping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assigns a single location to the data records. The data records can choose the location of dataset 1,
+the location of dataset 2, or get a location assignment based on an osm-derived network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – The data records to be spatially grouped</p></li>
+<li><p><strong>location_selection</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – <dl class="simple">
+<dt>Selection of how to spatially group the data</dt><dd><ul>
+<li><p>‘1’ : Use dataset 1’s location</p></li>
+<li><p>‘2’ : Use dataset 2’s location</p></li>
+<li><p>’osm’ : assign a location based on an osm-derived network</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Mode choice of  {‘walk’, ‘bike’, ‘drive’, ‘drive_service’, ‘all’, ‘all_private’, ‘none’}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>single_location</strong> – Data records grouped to a single spatial construct</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.lstm_preprocessing.time_grouping">
+<code class="descclassname">osm_multiplex.lstm_preprocessing.</code><code class="descname">time_grouping</code><span class="sig-paren">(</span><em>dataframe</em>, <em>interval='15T'</em>, <em>time_selection='1'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/lstm_preprocessing.html#time_grouping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.lstm_preprocessing.time_grouping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Groups data by temporal interval</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – Records to be temporally grouped</p></li>
+<li><p><strong>interval</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Interval over which records should be grouped. String options as specified by
+<cite>http://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#time-date-components</cite>
+The default is 15 minutes</p></li>
+<li><p><strong>time_selection</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – <dl class="simple">
+<dt>Source of time to be used</dt><dd><ul>
+<li><p>‘1’ : Use dataset 1’s time</p></li>
+<li><p>‘2’ : Use dataset 2’s time</p></li>
+<li><p>’avg’ : Use time that is the mean value of the two datasets’ times</p></li>
+</ul>
+</dd>
+</dl>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>grouped_time</strong> – Returns recorded mode occupancy levels grouped by specified time interval</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>pandas DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="osm_multiplex.lstm_preprocessing.weekly_dataframes">
+<code class="descclassname">osm_multiplex.lstm_preprocessing.</code><code class="descname">weekly_dataframes</code><span class="sig-paren">(</span><em>dataframe</em>, <em>interval='15T'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/lstm_preprocessing.html#weekly_dataframes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.lstm_preprocessing.weekly_dataframes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a dictionary of dataframes with each k,v pair representing a location and the difference between the two
+datasource counts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataframe</strong> (<em>pandas DataFrame</em>) – Contains count and difference values for all locations</p></li>
+<li><p><strong>interval</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – The time interval to be represented in the resulting dataframe. The default in 15 minutes, which results
+in 672 entries for every week</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>dataframes</strong> – A dictionary of DataFrames with each k,v pair representing a location and the difference between the two
+datasource counts.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">OSMmp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="count_data.html">Count Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lstm.html">LSTM</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">LSTM Preprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="osm_download.html">OSM Download</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="lstm.html" title="previous chapter">LSTM</a></li>
+      <li>Next: <a href="osm_download.html" title="next chapter">OSM Download</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Sylvan Hoover.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/lstm_preprocessing.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

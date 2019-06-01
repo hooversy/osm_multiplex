@@ -1,0 +1,538 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>osm_multiplex.count_data &#8212; OSMmp 0.1.0a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for osm_multiplex.count_data</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. moduleauthor:: Sylvan Hoover &lt;hooversy@oregonstate.edu&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># third-party libraries</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+
+<div class="viewcode-block" id="csv_to_df"><a class="viewcode-back" href="../../count_data.html#osm_multiplex.count_data.csv_to_df">[docs]</a><span class="k">def</span> <span class="nf">csv_to_df</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">element_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session_start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session_end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">boardings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alightings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lon</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Imports counter data as csv and creates pandas dataframe</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : str</span>
+<span class="sd">        File path of counter date</span>
+
+<span class="sd">    id : str</span>
+<span class="sd">        Header of id column</span>
+
+<span class="sd">    timestamp : str</span>
+<span class="sd">        Header of timestamp column. Optional if session times are used.</span>
+
+<span class="sd">    session_start : str</span>
+<span class="sd">        Header of session start time column. Optional if timestamp is used.</span>
+
+<span class="sd">    session_end : str</span>
+<span class="sd">        Header of session end time column. Optional if timestamp is used.</span>
+
+<span class="sd">    boardings : int</span>
+<span class="sd">        For grouped data, count of number boarding vehicle</span>
+
+<span class="sd">    alightings : int</span>
+<span class="sd">        For grouped data, count of number alighting vehicle</span>
+
+<span class="sd">    lat : str</span>
+<span class="sd">        Header of latitude column.</span>
+
+<span class="sd">    lon : str</span>
+<span class="sd">        Header of longitude column.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df_fixed_headers : pandas DataFrame</span>
+<span class="sd">        DataFrame of counter data with headers set for further processing</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">timestamp</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">df_imported_headers</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="n">session_start</span><span class="p">,</span> <span class="n">session_end</span><span class="p">],</span> <span class="n">infer_datetime_format</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">boardings</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_selected_columns</span> <span class="o">=</span> <span class="n">df_imported_headers</span><span class="p">[[</span><span class="n">element_id</span><span class="p">,</span> <span class="n">session_start</span><span class="p">,</span> <span class="n">session_end</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">df_fixed_headers</span> <span class="o">=</span> <span class="n">df_selected_columns</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> 
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">element_id</span><span class="p">:</span> <span class="s2">&quot;element_id&quot;</span><span class="p">,</span> <span class="n">session_start</span><span class="p">:</span> <span class="s2">&quot;session_start&quot;</span><span class="p">,</span> <span class="n">session_end</span><span class="p">:</span> <span class="s2">&quot;session_end&quot;</span><span class="p">,</span>
+                         <span class="n">lat</span><span class="p">:</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="n">lon</span><span class="p">:</span> <span class="s2">&quot;lon&quot;</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">df_selected_columns</span> <span class="o">=</span> <span class="n">df_imported_headers</span><span class="p">[[</span><span class="n">element_id</span><span class="p">,</span> <span class="n">session_start</span><span class="p">,</span> <span class="n">session_end</span><span class="p">,</span> <span class="n">boardings</span><span class="p">,</span> <span class="n">alightings</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">df_fixed_headers</span> <span class="o">=</span> <span class="n">df_selected_columns</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> 
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">element_id</span><span class="p">:</span> <span class="s2">&quot;element_id&quot;</span><span class="p">,</span> <span class="n">session_start</span><span class="p">:</span> <span class="s2">&quot;session_start&quot;</span><span class="p">,</span> <span class="n">session_end</span><span class="p">:</span> <span class="s2">&quot;session_end&quot;</span><span class="p">,</span>
+                         <span class="n">boardings</span><span class="p">:</span><span class="s1">&#39;boardings&#39;</span><span class="p">,</span> <span class="n">alightings</span><span class="p">:</span><span class="s1">&#39;alightings&#39;</span><span class="p">,</span> <span class="n">lat</span><span class="p">:</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="n">lon</span><span class="p">:</span> <span class="s2">&quot;lon&quot;</span><span class="p">})</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">df_imported_headers</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="n">timestamp</span><span class="p">],</span> <span class="n">infer_datetime_format</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">boardings</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_selected_columns</span> <span class="o">=</span> <span class="n">df_imported_headers</span><span class="p">[[</span><span class="n">element_id</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">df_fixed_headers</span> <span class="o">=</span> <span class="n">df_selected_columns</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> 
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">element_id</span><span class="p">:</span><span class="s1">&#39;element_id&#39;</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">:</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="n">lat</span><span class="p">:</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">lon</span><span class="p">:</span><span class="s1">&#39;lon&#39;</span><span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">df_selected_columns</span> <span class="o">=</span> <span class="n">df_imported_headers</span><span class="p">[[</span><span class="n">element_id</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">boardings</span><span class="p">,</span> <span class="n">alightings</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">df_fixed_headers</span> <span class="o">=</span> <span class="n">df_selected_columns</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> 
+                <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="n">element_id</span><span class="p">:</span><span class="s1">&#39;element_id&#39;</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">:</span> <span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="n">boardings</span><span class="p">:</span><span class="s1">&#39;boardings&#39;</span><span class="p">,</span> <span class="n">alightings</span><span class="p">:</span><span class="s1">&#39;alightings&#39;</span><span class="p">,</span>
+                         <span class="n">lat</span><span class="p">:</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="n">lon</span><span class="p">:</span><span class="s1">&#39;lon&#39;</span><span class="p">})</span>
+    
+    <span class="k">return</span> <span class="n">df_fixed_headers</span></div>
+
+<div class="viewcode-block" id="standardize_datetime"><a class="viewcode-back" href="../../count_data.html#osm_multiplex.count_data.standardize_datetime">[docs]</a><span class="k">def</span> <span class="nf">standardize_datetime</span><span class="p">(</span><span class="n">dataframe</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts epoch times to datetime format. The import of the csv infers datetime format except in the</span>
+<span class="sd">    case of epoch times. If epoch times are present, this converts them to datetime.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        DataFrame of the imported csv potentially with epoch times</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        DataFrame with all times now datetime format</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">time_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp1&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp2&#39;</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">,</span> 
+                 <span class="s1">&#39;session_start&#39;</span><span class="p">,</span> <span class="s1">&#39;session_end&#39;</span><span class="p">,</span> <span class="s1">&#39;session_start1&#39;</span><span class="p">,</span> <span class="s1">&#39;session_end1&#39;</span><span class="p">,</span> <span class="s1">&#39;session_start2&#39;</span><span class="p">,</span> <span class="s1">&#39;session_end2&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">time</span> <span class="ow">in</span> <span class="n">time_list</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">time</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="s1">&#39;datetime64[ns]&#39;</span><span class="p">:</span>
+                <span class="n">dataframe</span><span class="p">[</span><span class="n">time</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="n">time</span><span class="p">],</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">dataframe</span></div>
+
+<div class="viewcode-block" id="standardize_epoch"><a class="viewcode-back" href="../../count_data.html#osm_multiplex.count_data.standardize_epoch">[docs]</a><span class="k">def</span> <span class="nf">standardize_epoch</span><span class="p">(</span><span class="n">dataframe</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Converts datetimes times to unix time format.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        DataFrame of the imported csv potentially with datetimes</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        DataFrame with all times now unix time int64 format</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">time_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp1&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp2&#39;</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">,</span> 
+                 <span class="s1">&#39;session_start&#39;</span><span class="p">,</span> <span class="s1">&#39;session_end&#39;</span><span class="p">,</span> <span class="s1">&#39;session_start1&#39;</span><span class="p">,</span> <span class="s1">&#39;session_end1&#39;</span><span class="p">,</span> <span class="s1">&#39;session_start2&#39;</span><span class="p">,</span> <span class="s1">&#39;session_end2&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">time</span> <span class="ow">in</span> <span class="n">time_list</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">time</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="s1">&#39;int64&#39;</span><span class="p">:</span>
+                <span class="n">dataframe</span><span class="p">[</span><span class="n">time</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">time</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">time</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">10000000000</span><span class="p">:</span>
+                    <span class="n">dataframe</span><span class="p">[</span><span class="n">time</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">time</span><span class="p">]</span> <span class="o">//</span> <span class="mi">10</span><span class="o">**</span><span class="mi">9</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">dataframe</span></div>
+
+<div class="viewcode-block" id="session_length_filter"><a class="viewcode-back" href="../../count_data.html#osm_multiplex.count_data.session_length_filter">[docs]</a><span class="k">def</span> <span class="nf">session_length_filter</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">session_max</span><span class="o">=</span><span class="mi">600</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;If dataset has start and stop times for a session, filters out sessions exceeding max defined length</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        DataFrame of all the records including single timestamp and session duration</span>
+
+<span class="sd">    session_max : int</span>
+<span class="sd">        The max length of a session in seconds to be included as a mobility candidate session</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    filtered_dataframe : pandas DataFrame</span>
+<span class="sd">        DataFrame with all the records with a single timestamp and those with sessions shorter than defined</span>
+<span class="sd">        by `session_max`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;session_length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;session_end&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;session_start&#39;</span><span class="p">]</span>
+        <span class="n">mobility_sessions</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;session_length&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">session_max</span>
+        <span class="n">filtered_dataframe</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">mobility_sessions</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;session_length&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">filtered_dataframe</span> <span class="o">=</span> <span class="n">dataframe</span>
+
+    <span class="k">return</span> <span class="n">filtered_dataframe</span></div>
+
+<div class="viewcode-block" id="time_range_join_np"><a class="viewcode-back" href="../../count_data.html#osm_multiplex.count_data.time_range_join_np">[docs]</a><span class="k">def</span> <span class="nf">time_range_join_np</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">time_range</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Performs a range join based on indicated time plus/minus `time_range` buffer. This approach is quick and leverages</span>
+<span class="sd">    numpy, but may fail on larger datasets due to exceeding memory limits</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data1 : pandas DataFrame</span>
+<span class="sd">        DataFrame of the first dataset</span>
+
+<span class="sd">    data2 : pandas DataFrame</span>
+<span class="sd">        DataFrame of the second dataset</span>
+
+<span class="sd">    time_range : int</span>
+<span class="sd">        Value for time buffer indicating range in join</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df_range_join : pandas DataFrame</span>
+<span class="sd">        DataFrame with a range join of the two datasets based on time</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">d1_time</span> <span class="o">=</span> <span class="n">data1</span><span class="o">.</span><span class="n">timestamp1</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">d1_time</span> <span class="o">=</span> <span class="n">data1</span><span class="o">.</span><span class="n">session_start1</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">d2_time</span> <span class="o">=</span> <span class="n">data2</span><span class="o">.</span><span class="n">timestamp2</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">d2_time</span> <span class="o">=</span> <span class="n">data2</span><span class="o">.</span><span class="n">session_start2</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="n">d2_time_high</span> <span class="o">=</span> <span class="n">d2_time</span> <span class="o">+</span> <span class="n">time_range</span>
+    <span class="n">d2_time_low</span> <span class="o">=</span> <span class="n">d2_time</span> <span class="o">-</span> <span class="n">time_range</span>
+
+    <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">d1_time</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">d2_time_low</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">d1_time</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">d2_time_high</span><span class="p">))</span>
+    <span class="n">df_range_join_objects</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">data1</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data2</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">j</span><span class="p">]]),</span>
+                        <span class="n">columns</span><span class="o">=</span><span class="n">data1</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data2</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+                        <span class="p">)</span>
+
+    <span class="n">df_range_join</span> <span class="o">=</span> <span class="n">df_range_join_objects</span><span class="o">.</span><span class="n">infer_objects</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">df_range_join</span></div>
+
+<div class="viewcode-block" id="time_range_join_sql"><a class="viewcode-back" href="../../count_data.html#osm_multiplex.count_data.time_range_join_sql">[docs]</a><span class="k">def</span> <span class="nf">time_range_join_sql</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">time_range</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Performs a range join based on indicated time plus/minus `time_range` buffer. This function uses the SQL API, which is</span>
+<span class="sd">    much slower than the numpy based approach, but it more memory efficient so will work on larger datasets where the numpy </span>
+<span class="sd">    approach may quickly exceed available memory and fail</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data1 : pandas DataFrame</span>
+<span class="sd">        DataFrame of the first dataset</span>
+
+<span class="sd">    data2 : pandas DataFrame</span>
+<span class="sd">        DataFrame of the second dataset</span>
+
+<span class="sd">    time_range : int</span>
+<span class="sd">        Value for time buffer indicating range in join</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df_range_join : pandas DataFrame</span>
+<span class="sd">        DataFrame with a range join of the two datasets based on time</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">data1</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data1</span><span class="p">[</span><span class="s1">&#39;timestamp1&#39;</span><span class="p">]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">data1</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data1</span><span class="p">[</span><span class="s1">&#39;session_start1&#39;</span><span class="p">]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;timestamp2&#39;</span><span class="p">]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;session_start2&#39;</span><span class="p">]</span>
+
+    <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;time_high&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">time_range</span>
+    <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;time_low&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data2</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">time_range</span>
+    <span class="n">data2</span> <span class="o">=</span> <span class="n">data2</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span>
+
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;:memory:&#39;</span><span class="p">)</span>
+
+    <span class="n">data1</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;data1&#39;</span><span class="p">,</span> <span class="n">conn</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">data2</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="s1">&#39;data2&#39;</span><span class="p">,</span> <span class="n">conn</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">qry</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">        select</span>
+<span class="s1">            *</span>
+<span class="s1">        from</span>
+<span class="s1">            data1 join data2 on</span>
+<span class="s1">            time between time_low and time_high</span>
+<span class="s1">          &#39;&#39;&#39;</span>
+
+    <span class="n">df_range_join</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql_query</span><span class="p">(</span><span class="n">qry</span><span class="p">,</span> <span class="n">conn</span><span class="p">)</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;time_high&#39;</span><span class="p">,</span> <span class="s1">&#39;time_low&#39;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">df_range_join</span></div>
+
+<span class="c1"># def time_range_join_intervalindex(data1, data2, time_range=60):</span>
+<span class="c1">#     &quot;&quot;&quot;Performs a range join based on indicated time plus/minus `time_range` buffer. This is an attempt to use interval</span>
+<span class="c1">#     indexing that exists in pandas, but for the moment can only serve as a merge and not a join so multiple records matches</span>
+<span class="c1">#     don&#39;t get their full representation</span>
+
+<span class="c1">#     Parameters</span>
+<span class="c1">#     ----------</span>
+<span class="c1">#     data1 : pandas DataFrame</span>
+<span class="c1">#         DataFrame of the first dataset</span>
+
+<span class="c1">#     data2 : pandas DataFrame</span>
+<span class="c1">#         DataFrame of the second dataset</span>
+
+<span class="c1">#     time_range : int</span>
+<span class="c1">#         Value for time buffer indicating range in join</span>
+    
+<span class="c1">#     Returns</span>
+<span class="c1">#     -------</span>
+<span class="c1">#     df_range_join : pandas DataFrame</span>
+<span class="c1">#         DataFrame with a range join of the two datasets based on time</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     try:</span>
+<span class="c1">#         data1[&#39;time&#39;] = data1[&#39;timestamp1&#39;]</span>
+<span class="c1">#     except:</span>
+<span class="c1">#         data1[&#39;time&#39;] = data1[&#39;session_start1&#39;]</span>
+
+<span class="c1">#     try:</span>
+<span class="c1">#         data2[&#39;time&#39;] = data2[&#39;timestamp2&#39;]</span>
+<span class="c1">#     except:</span>
+<span class="c1">#         data2[&#39;time&#39;] = data2[&#39;session_start2&#39;]</span>
+
+<span class="c1">#     data2[&#39;time_high&#39;] = data2[&#39;time&#39;] + time_range</span>
+<span class="c1">#     data2[&#39;time_low&#39;] = data2[&#39;time&#39;] - time_range</span>
+<span class="c1">#     data2 = data2.drop(columns=[&#39;time&#39;])</span>
+
+<span class="c1">#     time_range = pd.IntervalIndex.from_arrays(data2.time_low, data2.time_high, &#39;both&#39;)</span>
+<span class="c1">#     data1_interval = data1.set_index(&#39;time&#39;)</span>
+<span class="c1">#     data2_interval = data2.set_index(time_range)</span>
+<span class="c1">#     df_range_join = # can&#39;t join w/ int and interval type indexes</span>
+
+<span class="c1">#     return df_range_join</span>
+
+<div class="viewcode-block" id="haversine_dist_filter"><a class="viewcode-back" href="../../count_data.html#osm_multiplex.count_data.haversine_dist_filter">[docs]</a><span class="k">def</span> <span class="nf">haversine_dist_filter</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">dist_max</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns dataframe with filtered for distance between recorded points using haversine distance</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        DataFrame of the recorded candidate pairs</span>
+
+<span class="sd">    dist_max : int</span>
+<span class="sd">        Maximum distance between records</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df_dist : pandas DataFrame</span>
+<span class="sd">        DataFrame filtered for only records within defined distance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">radius</span> <span class="o">=</span> <span class="mi">6378137</span> <span class="c1"># meters</span>
+
+    <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;dlat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;lat2&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;lat1&#39;</span><span class="p">])</span>
+    <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;dlon&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;lon2&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;lon1&#39;</span><span class="p">])</span>
+    <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;dlat&#39;</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;lat1&#39;</span><span class="p">]))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;lat2&#39;</span><span class="p">]))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;dlon&#39;</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]))</span>
+    <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;dist&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">]</span>
+
+    <span class="n">close_distance</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;dist&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">dist_max</span>
+    <span class="n">df_dist</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[</span><span class="n">close_distance</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;dlat&#39;</span><span class="p">,</span> <span class="s1">&#39;dlon&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;dist&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df_dist</span></div>
+
+<div class="viewcode-block" id="pairwise_filter"><a class="viewcode-back" href="../../count_data.html#osm_multiplex.count_data.pairwise_filter">[docs]</a><span class="k">def</span> <span class="nf">pairwise_filter</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">session_limit</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">detection_distance</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">detection_time</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Takes two datasets with identifiers to range join and filter to produce a list of probable joint identifiers</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data1 : pandas DataFrame</span>
+<span class="sd">        DataFrame of the first dataset</span>
+
+<span class="sd">    data2 : pandas DataFrame</span>
+<span class="sd">        DataFrame of the second dataset</span>
+
+<span class="sd">    session_limit : int</span>
+<span class="sd">        For records with session times, the maximum amount of time in seconds for a session to have occurred.</span>
+<span class="sd">        This is to filter for only sessions while in transit</span>
+
+<span class="sd">    detection_distance : int</span>
+<span class="sd">        The maximum distance in meters for two detections to have occurred</span>
+
+<span class="sd">    detection_time : int</span>
+<span class="sd">        The maximum time difference in the initial recording of a detection</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    candidate_pairs : pandas DataFrame</span>
+<span class="sd">        DataFrame of possible shared identifiers</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data1_epoch</span> <span class="o">=</span> <span class="n">standardize_epoch</span><span class="p">(</span><span class="n">data1</span><span class="p">)</span>
+    <span class="n">data2_epoch</span> <span class="o">=</span> <span class="n">standardize_epoch</span><span class="p">(</span><span class="n">data2</span><span class="p">)</span>
+
+    <span class="n">data1_session_filter</span> <span class="o">=</span> <span class="n">session_length_filter</span><span class="p">(</span><span class="n">data1_epoch</span><span class="p">,</span> <span class="n">session_max</span><span class="o">=</span><span class="n">session_limit</span><span class="p">)</span>
+    <span class="n">data2_session_filter</span> <span class="o">=</span> <span class="n">session_length_filter</span><span class="p">(</span><span class="n">data2_epoch</span><span class="p">,</span> <span class="n">session_max</span><span class="o">=</span><span class="n">session_limit</span><span class="p">)</span>
+    
+    <span class="c1"># appends column names to distinguish between the two datasets</span>
+    <span class="n">data1_suffix</span> <span class="o">=</span> <span class="n">data1_session_filter</span><span class="o">.</span><span class="n">add_suffix</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="n">data2_suffix</span> <span class="o">=</span> <span class="n">data2_session_filter</span><span class="o">.</span><span class="n">add_suffix</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)</span>
+
+    <span class="c1"># range join includes filtering for time proximity of recorded event</span>
+    <span class="n">df_range_join</span> <span class="o">=</span> <span class="n">time_range_join_sql</span><span class="p">(</span><span class="n">data1_suffix</span><span class="p">,</span> <span class="n">data2_suffix</span><span class="p">,</span> <span class="n">time_range</span><span class="o">=</span><span class="n">detection_time</span><span class="p">)</span>
+
+    <span class="n">candidate_pairs</span> <span class="o">=</span> <span class="n">haversine_dist_filter</span><span class="p">(</span><span class="n">df_range_join</span><span class="p">,</span> <span class="n">dist_max</span><span class="o">=</span><span class="n">detection_distance</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">candidate_pairs</span></div>
+
+<div class="viewcode-block" id="npmi"><a class="viewcode-back" href="../../count_data.html#osm_multiplex.count_data.npmi">[docs]</a><span class="k">def</span> <span class="nf">npmi</span><span class="p">(</span><span class="n">dataframe</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Takes a dataset with identifiers and calculates the Normalize Pointwise Mutual Information value</span>
+<span class="sd">    for every pair of identifiers</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        DataFrame of the candidate identifiers</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    npmi : pandas DataFrame</span>
+<span class="sd">        DataFrame of NMPI values for all pairs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">id_only</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[[</span><span class="s1">&#39;element_id1&#39;</span><span class="p">,</span> <span class="s1">&#39;element_id2&#39;</span><span class="p">]]</span>
+    <span class="n">ids_size</span> <span class="o">=</span> <span class="n">id_only</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;element_id1&#39;</span><span class="p">,</span> <span class="s1">&#39;element_id2&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="s1">&#39;ids_count&#39;</span><span class="p">)</span>
+    <span class="n">id1_size</span> <span class="o">=</span> <span class="n">id_only</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;element_id1&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="s1">&#39;id1_count&#39;</span><span class="p">)</span>
+    <span class="n">id2_size</span> <span class="o">=</span> <span class="n">id_only</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;element_id2&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="s1">&#39;id2_count&#39;</span><span class="p">)</span>
+    <span class="n">total_id_count</span> <span class="o">=</span> <span class="n">id_only</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">id_distinct</span> <span class="o">=</span> <span class="n">id_only</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">calculations</span> <span class="o">=</span> <span class="n">id_distinct</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ids_size</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;element_id1&#39;</span><span class="p">,</span> <span class="s1">&#39;element_id2&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">id1_size</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;element_id1&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">id2_size</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;element_id2&#39;</span><span class="p">])</span>
+    <span class="n">calculations</span><span class="p">[</span><span class="s1">&#39;pmi&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">((</span><span class="n">calculations</span><span class="p">[</span><span class="s1">&#39;ids_count&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_id_count</span><span class="p">)</span> <span class="o">/</span> <span class="p">((</span><span class="n">calculations</span><span class="p">[</span><span class="s1">&#39;id1_count&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_id_count</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">calculations</span><span class="p">[</span><span class="s1">&#39;id2_count&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_id_count</span><span class="p">)))</span>
+    <span class="n">calculations</span><span class="p">[</span><span class="s1">&#39;npmi&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calculations</span><span class="p">[</span><span class="s1">&#39;pmi&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">calculations</span><span class="p">[</span><span class="s1">&#39;ids_count&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_id_count</span><span class="p">))</span>
+
+    <span class="n">npmi</span> <span class="o">=</span> <span class="n">calculations</span><span class="p">[[</span><span class="s1">&#39;element_id1&#39;</span><span class="p">,</span> <span class="s1">&#39;element_id2&#39;</span><span class="p">,</span> <span class="s1">&#39;npmi&#39;</span><span class="p">]]</span>
+
+    <span class="k">return</span> <span class="n">npmi</span></div>
+
+<div class="viewcode-block" id="npmi_data_filter"><a class="viewcode-back" href="../../count_data.html#osm_multiplex.count_data.npmi_data_filter">[docs]</a><span class="k">def</span> <span class="nf">npmi_data_filter</span><span class="p">(</span><span class="n">count_data</span><span class="p">,</span> <span class="n">npmi_results</span><span class="p">,</span> <span class="n">min_npmi</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns only data records where the npmi for the id pair exceeds a minimum threshold</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    count_data : pandas DataFrame</span>
+<span class="sd">        Records of candidate pairs likely output from pairwise_filer</span>
+
+<span class="sd">    npmi_results : pandas DataFrame</span>
+<span class="sd">        All the pairs of identifiers and their respective nmpi values from candidate pairs</span>
+
+<span class="sd">    min_nmpi : float</span>
+<span class="sd">        Threshold for accepted pairs recognizing &quot;-1 for never occurring together, </span>
+<span class="sd">        0 for independence, and +1 for complete co-occurrence.&quot;</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    selected_data : pandas DataFrame</span>
+<span class="sd">        Only the records of identifier pairs that exceed the npmi threshold</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">selected_pairs</span> <span class="o">=</span> <span class="n">npmi_results</span><span class="p">[</span><span class="s1">&#39;npmi&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">min_npmi</span>
+    <span class="n">pair_list</span> <span class="o">=</span> <span class="n">npmi_results</span><span class="p">[</span><span class="n">selected_pairs</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;npmi&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">selected_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">count_data</span><span class="p">,</span> <span class="n">pair_list</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;element_id1&#39;</span><span class="p">,</span> <span class="s1">&#39;element_id2&#39;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">selected_data</span></div>
+
+<span class="k">def</span> <span class="nf">process_data</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">data2</span><span class="p">,</span> <span class="n">run_npmi</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+    <span class="n">element_id1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session_start1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session_end1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">boardings1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alightings1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lat1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lon1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">element_id2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timestamp2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session_start2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">session_end2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">boardings2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alightings2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lat2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lon2</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    
+    <span class="n">df1</span> <span class="o">=</span> <span class="n">csv_to_df</span><span class="p">(</span><span class="n">data1</span><span class="p">,</span> <span class="n">element_id</span><span class="o">=</span><span class="n">element_id1</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp1</span><span class="p">,</span> <span class="n">session_start</span><span class="o">=</span><span class="n">session_start1</span><span class="p">,</span> <span class="n">session_end</span><span class="o">=</span><span class="n">session_end1</span><span class="p">,</span>
+                    <span class="n">boardings</span><span class="o">=</span><span class="n">boardings1</span><span class="p">,</span> <span class="n">alightings</span><span class="o">=</span><span class="n">alightings1</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="n">lat1</span><span class="p">,</span> <span class="n">lon</span><span class="o">=</span><span class="n">lon1</span><span class="p">)</span>
+    <span class="n">df2</span> <span class="o">=</span> <span class="n">csv_to_df</span><span class="p">(</span><span class="n">data2</span><span class="p">,</span> <span class="n">element_id</span><span class="o">=</span><span class="n">element_id2</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">timestamp2</span><span class="p">,</span> <span class="n">session_start</span><span class="o">=</span><span class="n">session_start2</span><span class="p">,</span> <span class="n">session_end</span><span class="o">=</span><span class="n">session_end2</span><span class="p">,</span>
+                    <span class="n">boardings</span><span class="o">=</span><span class="n">boardings2</span><span class="p">,</span> <span class="n">alightings</span><span class="o">=</span><span class="n">alightings2</span><span class="p">,</span> <span class="n">lat</span><span class="o">=</span><span class="n">lat2</span><span class="p">,</span> <span class="n">lon</span><span class="o">=</span><span class="n">lon2</span><span class="p">)</span>
+    <span class="n">paired</span> <span class="o">=</span> <span class="n">pairwise_filter</span><span class="p">(</span><span class="n">df1</span><span class="p">,</span> <span class="n">df2</span><span class="p">)</span>
+    <span class="c1"># if only individually identified data, then process for npmi tagging</span>
+    <span class="k">if</span> <span class="n">run_npmi</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>
+        <span class="n">npmi_results</span> <span class="o">=</span> <span class="n">npmi</span><span class="p">(</span><span class="n">paired</span><span class="p">)</span>
+        <span class="n">likely_pairs</span> <span class="o">=</span> <span class="n">npmi_data_filter</span><span class="p">(</span><span class="n">paired</span><span class="p">,</span> <span class="n">npmi_results</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">likely_pairs</span>
+    <span class="c1"># otherwise return all pairs that meet filter requirements without npmi assessment</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">paired</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">OSMmp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../count_data.html">Count Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lstm.html">LSTM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lstm_preprocessing.html">LSTM Preprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../osm_download.html">OSM Download</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Sylvan Hoover.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

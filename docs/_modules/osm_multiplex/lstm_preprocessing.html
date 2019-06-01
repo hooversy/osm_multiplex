@@ -1,0 +1,361 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>osm_multiplex.lstm_preprocessing &#8212; OSMmp 0.1.0a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for osm_multiplex.lstm_preprocessing</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. moduleauthor:: Sylvan Hoover &lt;hooversy@oregonstate.edu&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># third-party libraries</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">osmnx</span> <span class="k">as</span> <span class="nn">ox</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># local imports</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">count_data</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">osm_download</span>
+
+<div class="viewcode-block" id="spatial_grouping"><a class="viewcode-back" href="../../lstm_preprocessing.html#osm_multiplex.lstm_preprocessing.spatial_grouping">[docs]</a><span class="k">def</span> <span class="nf">spatial_grouping</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">location_selection</span><span class="o">=</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Assigns a single location to the data records. The data records can choose the location of dataset 1,</span>
+<span class="sd">    the location of dataset 2, or get a location assignment based on an osm-derived network.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        The data records to be spatially grouped</span>
+
+<span class="sd">    location_selection : str</span>
+<span class="sd">        Selection of how to spatially group the data</span>
+<span class="sd">            - &#39;1&#39; : Use dataset 1&#39;s location</span>
+<span class="sd">            - &#39;2&#39; : Use dataset 2&#39;s location</span>
+<span class="sd">            - &#39;osm&#39; : assign a location based on an osm-derived network</span>
+
+<span class="sd">    mode : str</span>
+<span class="sd">        Mode choice of  {‘walk’, ‘bike’, ‘drive’, ‘drive_service’, ‘all’, ‘all_private’, ‘none’}</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    single_location : pandas DataFrame</span>
+<span class="sd">        Data records grouped to a single spatial construct</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">location_selection</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span><span class="p">:</span>
+        <span class="n">single_location</span> <span class="o">=</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lat2&#39;</span><span class="p">,</span> <span class="s1">&#39;lon2&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;lat1&quot;</span><span class="p">:</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="s2">&quot;lon1&quot;</span><span class="p">:</span> <span class="s2">&quot;lon&quot;</span><span class="p">})</span>
+    <span class="k">if</span> <span class="n">location_selection</span> <span class="o">==</span> <span class="s1">&#39;2&#39;</span><span class="p">:</span>
+        <span class="n">single_location</span> <span class="o">=</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lat1&#39;</span><span class="p">,</span> <span class="s1">&#39;lon1&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;lat2&quot;</span><span class="p">:</span> <span class="s2">&quot;lat&quot;</span><span class="p">,</span> <span class="s2">&quot;lon2&quot;</span><span class="p">:</span> <span class="s2">&quot;lon&quot;</span><span class="p">})</span>
+    <span class="k">if</span> <span class="n">location_selection</span> <span class="o">==</span> <span class="s1">&#39;osm&#39;</span><span class="p">:</span>
+        <span class="n">single_location</span> <span class="o">=</span> <span class="n">assign_osm</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">single_location</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="assign_osm"><a class="viewcode-back" href="../../lstm_preprocessing.html#osm_multiplex.lstm_preprocessing.assign_osm">[docs]</a><span class="k">def</span> <span class="nf">assign_osm</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Assigns an OSM node by taking the average location of the two datasets and finding the nearest node present in the</span>
+<span class="sd">    mode layer.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        The data records to be used to find the nearest OSM node</span>
+
+<span class="sd">    mode : str</span>
+<span class="sd">        Mode choice of  {‘walk’, ‘bike’, ‘drive’, ‘drive_service’, ‘all’, ‘all_private’, ‘none’}</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df_osm_location : pandas DataFrame</span>
+<span class="sd">        Data records with the OSM ID of the nearest node and its respective lat/lon</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">max_lat</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[[</span><span class="s1">&#39;lat1&#39;</span><span class="p">,</span> <span class="s1">&#39;lat2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">min_lat</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[[</span><span class="s1">&#39;lat1&#39;</span><span class="p">,</span> <span class="s1">&#39;lat2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">max_lon</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[[</span><span class="s1">&#39;lon1&#39;</span><span class="p">,</span> <span class="s1">&#39;lon2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">min_lon</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[[</span><span class="s1">&#39;lon1&#39;</span><span class="p">,</span> <span class="s1">&#39;lon2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+
+    <span class="n">osm_layer</span> <span class="o">=</span> <span class="n">osm_download</span><span class="o">.</span><span class="n">download_osm_layer</span><span class="p">([</span><span class="n">max_lat</span><span class="p">,</span> <span class="n">min_lat</span><span class="p">,</span> <span class="n">max_lon</span><span class="p">,</span> <span class="n">min_lon</span><span class="p">],</span> <span class="n">mode</span><span class="p">)</span>
+    <span class="n">osm_nodes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([[</span><span class="n">node</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">node</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;y&#39;</span><span class="p">],</span> <span class="n">node</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;x&#39;</span><span class="p">]]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">osm_layer</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)],</span>
+                             <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;osm_id&#39;</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;osm_id&#39;</span><span class="p">)</span>
+
+    <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;avg_lat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[[</span><span class="s1">&#39;lat1&#39;</span><span class="p">,</span> <span class="s1">&#39;lat2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;avg_lon&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataframe</span><span class="p">[[</span><span class="s1">&#39;lon1&#39;</span><span class="p">,</span> <span class="s1">&#39;lon2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">nearest_node</span> <span class="o">=</span> <span class="n">ox</span><span class="o">.</span><span class="n">get_nearest_nodes</span><span class="p">(</span><span class="n">osm_layer</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;avg_lon&#39;</span><span class="p">],</span> <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;avg_lat&#39;</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;balltree&#39;</span><span class="p">)</span>
+    <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;osm_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nearest_node</span>
+    <span class="n">df_osm_location</span> <span class="o">=</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">osm_nodes</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;osm_id&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lat1&#39;</span><span class="p">,</span> <span class="s1">&#39;lon1&#39;</span><span class="p">,</span> <span class="s1">&#39;lat2&#39;</span><span class="p">,</span> <span class="s1">&#39;lon2&#39;</span><span class="p">,</span> <span class="s1">&#39;avg_lat&#39;</span><span class="p">,</span> <span class="s1">&#39;avg_lon&#39;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">df_osm_location</span></div>
+
+<div class="viewcode-block" id="occupancy_level"><a class="viewcode-back" href="../../lstm_preprocessing.html#osm_multiplex.lstm_preprocessing.occupancy_level">[docs]</a><span class="k">def</span> <span class="nf">occupancy_level</span><span class="p">(</span><span class="n">dataframe</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the count to be attributed to a record. If connected to an individual, then should be assigned</span>
+<span class="sd">    a value of 1. If grouped boardings and alightings, then a running sum of boardings and alightings </span>
+<span class="sd">    will be used to determine occupancy</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        Records either containing individuals or grouped data</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        Records that now include an occupancy value indicative of the presence that detected by that system</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="s1">&#39;boardings1&#39;</span> <span class="ow">in</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">dataframe</span> <span class="o">=</span> <span class="n">daily_cumulative</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;occupancy1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="s1">&#39;boardings2&#39;</span> <span class="ow">in</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">dataframe</span> <span class="o">=</span> <span class="n">daily_cumulative</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dataframe</span><span class="p">[</span><span class="s1">&#39;occupancy2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">dataframe</span></div>
+
+<div class="viewcode-block" id="daily_cumulative"><a class="viewcode-back" href="../../lstm_preprocessing.html#osm_multiplex.lstm_preprocessing.daily_cumulative">[docs]</a><span class="k">def</span> <span class="nf">daily_cumulative</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">identifier</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Cumulative daily sum of boardings and alightings to indicate vehicle occupancy. Currently lacks any</span>
+<span class="sd">    tuning or preprocessing, but that can be implemented in later versions</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        Records with at least one dataset being grouped</span>
+
+<span class="sd">    identifier : str</span>
+<span class="sd">        Indicates which dataset is the grouped data over which the cumulative occupancy is to be calculated</span>
+<span class="sd">            - &#39;1&#39; : Calculate for dataset 1</span>
+<span class="sd">            - &#39;2&#39; : Calculate for dataset 2</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sum_occupancy : pandas DataFrame</span>
+<span class="sd">        Dataframe with one dataset&#39;s boardings/alightings replaced by occupancy</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">datetime_df</span> <span class="o">=</span> <span class="n">count_data</span><span class="o">.</span><span class="n">standardize_datetime</span><span class="p">(</span><span class="n">dataframe</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">identifier</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span><span class="p">:</span>
+        <span class="n">occupancy</span> <span class="o">=</span> <span class="s1">&#39;occupancy1&#39;</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="s1">&#39;element_id1&#39;</span>
+        <span class="n">boardings</span> <span class="o">=</span> <span class="s1">&#39;boardings1&#39;</span>
+        <span class="n">alightings</span> <span class="o">=</span> <span class="s1">&#39;alightings1&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;timestamp1&#39;</span> <span class="ow">in</span> <span class="n">datetime_df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="s1">&#39;timestamp1&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="s1">&#39;session_start1&#39;</span>
+    <span class="k">elif</span> <span class="n">identifier</span> <span class="o">==</span> <span class="s1">&#39;2&#39;</span><span class="p">:</span>
+        <span class="n">occupancy</span> <span class="o">=</span> <span class="s1">&#39;occupancy2&#39;</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="s1">&#39;element_id2&#39;</span>
+        <span class="n">boardings</span> <span class="o">=</span> <span class="s1">&#39;boardings2&#39;</span>
+        <span class="n">alightings</span> <span class="o">=</span> <span class="s1">&#39;alightings2&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;timestamp2&#39;</span> <span class="ow">in</span> <span class="n">datetime_df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="s1">&#39;timestamp2&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="s1">&#39;session_start2&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Need valid dataset identifier&#39;</span><span class="p">)</span>
+
+    <span class="n">datetime_df</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime_df</span><span class="p">[</span><span class="n">time</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">date</span>
+    <span class="n">datetime_df</span><span class="p">[</span><span class="s1">&#39;boarding_sum&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="n">time</span><span class="p">])</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="n">element</span><span class="p">,</span> <span class="s1">&#39;date&#39;</span><span class="p">])[</span><span class="n">boardings</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+    <span class="n">datetime_df</span><span class="p">[</span><span class="s1">&#39;alighting_sum&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="n">time</span><span class="p">])</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="n">element</span><span class="p">,</span> <span class="s1">&#39;date&#39;</span><span class="p">])[</span><span class="n">alightings</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+    <span class="n">datetime_df</span><span class="p">[</span><span class="n">occupancy</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime_df</span><span class="p">[</span><span class="s1">&#39;boarding_sum&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">datetime_df</span><span class="p">[</span><span class="s1">&#39;alighting_sum&#39;</span><span class="p">]</span>
+    <span class="n">sum_occupancy</span> <span class="o">=</span> <span class="n">datetime_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">,</span> <span class="n">boardings</span><span class="p">,</span> <span class="n">alightings</span><span class="p">,</span> <span class="s1">&#39;boarding_sum&#39;</span><span class="p">,</span> <span class="s1">&#39;alighting_sum&#39;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">sum_occupancy</span></div>
+
+<div class="viewcode-block" id="time_grouping"><a class="viewcode-back" href="../../lstm_preprocessing.html#osm_multiplex.lstm_preprocessing.time_grouping">[docs]</a><span class="k">def</span> <span class="nf">time_grouping</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="s1">&#39;15T&#39;</span><span class="p">,</span> <span class="n">time_selection</span><span class="o">=</span><span class="s1">&#39;1&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Groups data by temporal interval</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        Records to be temporally grouped</span>
+
+<span class="sd">    interval : str</span>
+<span class="sd">        Interval over which records should be grouped. String options as specified by </span>
+<span class="sd">        `http://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#time-date-components`</span>
+<span class="sd">        The default is 15 minutes</span>
+
+<span class="sd">    time_selection : str</span>
+<span class="sd">        Source of time to be used</span>
+<span class="sd">            - &#39;1&#39; : Use dataset 1&#39;s time</span>
+<span class="sd">            - &#39;2&#39; : Use dataset 2&#39;s time</span>
+<span class="sd">            - &#39;avg&#39; : Use time that is the mean value of the two datasets&#39; times</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    grouped_time : pandas DataFrame</span>
+<span class="sd">        Returns recorded mode occupancy levels grouped by specified time interval</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">epoch_df</span> <span class="o">=</span> <span class="n">count_data</span><span class="o">.</span><span class="n">standardize_epoch</span><span class="p">(</span><span class="n">dataframe</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">time_selection</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;timestamp1&#39;</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;session_start1&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">time_selection</span> <span class="o">==</span> <span class="s1">&#39;2&#39;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;timestamp2&#39;</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;session_start2&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">time_selection</span> <span class="o">==</span> <span class="s1">&#39;avg&#39;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;time1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;timestamp1&#39;</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;time1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;session_start1&#39;</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;time2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;timestamp2&#39;</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;time2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;session_start2&#39;</span><span class="p">]</span>
+
+        <span class="n">epoch_df</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch_df</span><span class="p">[[</span><span class="s1">&#39;time1&#39;</span><span class="p">,</span> <span class="s1">&#39;time2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Time selection not valid&#39;</span><span class="p">)</span>
+
+    <span class="n">datetime_df</span> <span class="o">=</span> <span class="n">count_data</span><span class="o">.</span><span class="n">standardize_datetime</span><span class="p">(</span><span class="n">epoch_df</span><span class="p">[[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">,</span> <span class="s1">&#39;occupancy1&#39;</span><span class="p">,</span> <span class="s1">&#39;occupancy2&#39;</span><span class="p">]])</span>
+    <span class="n">grouped_time</span> <span class="o">=</span> <span class="n">datetime_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="n">pd</span><span class="o">.</span><span class="n">Grouper</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="n">interval</span><span class="p">),</span> <span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">grouped_time</span></div>
+
+<div class="viewcode-block" id="weekly_dataframes"><a class="viewcode-back" href="../../lstm_preprocessing.html#osm_multiplex.lstm_preprocessing.weekly_dataframes">[docs]</a><span class="k">def</span> <span class="nf">weekly_dataframes</span><span class="p">(</span><span class="n">dataframe</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="s1">&#39;15T&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generates a dictionary of dataframes with each k,v pair representing a location and the difference between the two</span>
+<span class="sd">    datasource counts.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataframe : pandas DataFrame</span>
+<span class="sd">        Contains count and difference values for all locations</span>
+
+<span class="sd">    interval : str</span>
+<span class="sd">        The time interval to be represented in the resulting dataframe. The default in 15 minutes, which results</span>
+<span class="sd">        in 672 entries for every week</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dataframes : dict</span>
+<span class="sd">        A dictionary of DataFrames with each k,v pair representing a location and the difference between the two</span>
+<span class="sd">        datasource counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">grouped_dataframes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">pivoted_dataframes</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">]):</span>
+        <span class="n">grouped_dataframes</span><span class="p">[</span><span class="s1">&#39;location&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">location</span><span class="p">,</span> <span class="n">counts</span> <span class="ow">in</span> <span class="n">grouped_dataframes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">gaps_filled</span> <span class="o">=</span> <span class="n">counts</span><span class="p">[[</span><span class="s1">&#39;occupancy1&#39;</span><span class="p">,</span> <span class="s1">&#39;occupancy2&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">asfreq</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="n">interval</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;pad&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">pivoted</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span><span class="n">gaps_filled</span><span class="p">,</span>
+                                 <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="n">gaps_filled</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">gaps_filled</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">week</span><span class="p">],</span>
+                                 <span class="n">columns</span><span class="o">=</span><span class="n">gaps_filled</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Grouper</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;W&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">cumcount</span><span class="p">()</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                                 <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;occupancy1&#39;</span><span class="p">,</span> <span class="s1">&#39;occupancy2&#39;</span><span class="p">],</span>
+                                 <span class="n">aggfunc</span><span class="o">=</span><span class="s1">&#39;sum&#39;</span><span class="p">)</span>
+        <span class="n">pivoted</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;week&#39;</span><span class="p">]</span>
+        <span class="n">useful_data</span> <span class="o">=</span> <span class="n">pivoted</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c1"># removes likely incomplete first and last weeks</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">useful_data</span><span class="o">.</span><span class="n">empty</span> <span class="ow">or</span> <span class="n">useful_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;</span><span class="mi">5</span><span class="p">):</span>
+            <span class="n">pivoted_dataframes</span><span class="p">[</span><span class="n">location</span><span class="p">]</span> <span class="o">=</span> <span class="n">useful_data</span>
+
+    <span class="k">return</span> <span class="n">pivoted_dataframes</span></div>
+
+<span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="n">dataframe</span><span class="p">):</span>
+    <span class="n">spatial_grouped</span> <span class="o">=</span> <span class="n">spatial_grouping</span><span class="p">(</span><span class="n">dataframe</span><span class="p">)</span>
+    <span class="n">occupancy</span> <span class="o">=</span> <span class="n">occupancy_level</span><span class="p">(</span><span class="n">spatial_grouped</span><span class="p">)</span>
+    <span class="n">time_grouped</span> <span class="o">=</span> <span class="n">time_grouping</span><span class="p">(</span><span class="n">occupancy</span><span class="p">)</span>
+    <span class="n">preprocessed</span> <span class="o">=</span> <span class="n">weekly_dataframes</span><span class="p">(</span><span class="n">time_grouped</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">preprocessed</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">OSMmp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../count_data.html">Count Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lstm.html">LSTM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../lstm_preprocessing.html">LSTM Preprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../osm_download.html">OSM Download</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Sylvan Hoover.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

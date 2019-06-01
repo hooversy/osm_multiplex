@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>LSTM &#8212; OSMmp 0.1.0a0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="LSTM Preprocessing" href="lstm_preprocessing.html" />
+    <link rel="prev" title="Count Data" href="count_data.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-osm_multiplex.lstm">
+<span id="lstm"></span><h1>LSTM<a class="headerlink" href="#module-osm_multiplex.lstm" title="Permalink to this headline">¶</a></h1>
+<p>based on: <a class="reference external" href="https://github.com/chen0040/keras-anomaly-detection/blob/master/keras_anomaly_detection/library/recurrent.py">https://github.com/chen0040/keras-anomaly-detection/blob/master/keras_anomaly_detection/library/recurrent.py</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">members</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+<dl class="function">
+<dt id="osm_multiplex.lstm.anomaly_detect">
+<code class="descclassname">osm_multiplex.lstm.</code><code class="descname">anomaly_detect</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/osm_multiplex/lstm.html#anomaly_detect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#osm_multiplex.lstm.anomaly_detect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a dictionary of location, data pairs containing a series of temporal sample and assesses likely
+anomalous samples. The resulting dictionary can be used to identify locations and time periods of likely
+anomalous data collection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – Each key in the dictionary is a specific location with the value being a DataFrame of two time-series
+representing collected data from each source</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>reconstruction_dict</strong> – Each key is the location and error threshold with the value being a list of the reconstruction error
+for each sample in the location</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">OSMmp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="count_data.html">Count Data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">LSTM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lstm_preprocessing.html">LSTM Preprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="osm_download.html">OSM Download</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="count_data.html" title="previous chapter">Count Data</a></li>
+      <li>Next: <a href="lstm_preprocessing.html" title="next chapter">LSTM Preprocessing</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Sylvan Hoover.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/lstm.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
