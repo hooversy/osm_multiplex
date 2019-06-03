@@ -21,7 +21,7 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 # modified LstmAutoEncoder class from reference for comparative time-series of mobility data
 class LstmAutoEncoder(object):
     model_name = 'lstm-auto-encoder'
-    VERBOSE = 1
+    VERBOSE = 0
 
     def __init__(self):
         self.model = None
@@ -38,7 +38,7 @@ class LstmAutoEncoder(object):
         model.add(Dense(units=time_window_size, activation='linear'))
 
         model.compile(optimizer='adam', loss='mean_squared_error', metrics=[metric])
-        print(model.summary())
+        #print(model.summary())
         return model
 
     def load_model(self, model_dir_path):
@@ -93,7 +93,7 @@ class LstmAutoEncoder(object):
         scores = self.predict(timeseries_dataset)
         self.threshold = np.mean(scores) + std_dev_threshold * np.std(scores)
 
-        print('estimated threshold is ' + str(self.threshold))
+        #print('estimated threshold is ' + str(self.threshold))
 
         self.config = dict()
         self.config['time_window_size'] = self.time_window_size
@@ -135,7 +135,7 @@ def anomaly_detect(data):
     reconstruction_dict = {}
     for location, dataframe in data.items():
         model_dir_path = os.path.join(THIS_DIR, './models')
-        print(location + ' processing')
+        print(location)
         samples = len(dataframe.index.codes[0])
         timesteps = len(dataframe.columns.levels[1])
         np_data_o1 = dataframe[['occupancy1']].values
@@ -146,7 +146,7 @@ def anomaly_detect(data):
         np_data_o2 = scaler.fit_transform(np_data_o2)
         np_data_diff = scaler.fit_transform(np_data_diff)
         np_data = np.stack((np_data_o1, np_data_o2, np_data_diff), axis=-1)
-        print(np_data.shape)
+        print(str(np_data.shape[0]) + ' weeks processing') 
 
         ae = LstmAutoEncoder()
 
@@ -157,11 +157,16 @@ def anomaly_detect(data):
         ae.load_model(model_dir_path)
         anomaly_information = ae.anomaly(np_data[:, :, :])
         reconstruction_error = {}
-        reconstruction_error['threshold'] = ae.threshold
+        if ae.threshold == 0.0:
+            continue
+        else:
+            reconstruction_error['threshold'] = ae.threshold
         years = list(dataframe.index.get_level_values(0))
         weeks = list(dataframe.index.get_level_values(1))
         for idx, (is_anomaly, dist) in enumerate(anomaly_information):
             reconstruction_error[str(years[idx]) + ', ' +str(weeks[idx])] = [is_anomaly, dist]
+            if is_anomaly == True:
+                print(location + ' year ' + str(years[idx]) + ', week ' + str(weeks[idx]) + ' is anomalous')
         reconstruction_dict[location] = reconstruction_error
 
     return reconstruction_dict
