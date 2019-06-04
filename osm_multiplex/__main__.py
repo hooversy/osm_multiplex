@@ -1,5 +1,6 @@
 # third-party libraries
 from argparse import ArgumentParser
+from networkx import write_gpickle
 
 # local imports
 from osm_download import generate_multiplex
@@ -180,6 +181,7 @@ args = parser.parse_args()
 
 if args.graph == True:
     multiplex = generate_multiplex(args.graph_area, [args.graph_modes])
+    write_gpickle(multiplex, './osm_multiplex/data/multiplex.gpickle')
 elif args.anomaly_detect == True:
     likely_pairs = process_data(args.dataset1, args.dataset2, run_npmi=args.npmi,
     element_id1=args.element_id1, timestamp1=args.timestamp1, session_start1=args.session_start1, session_end1=args.session_end1,
