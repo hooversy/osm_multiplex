@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Examples &#8212; OSMmp 0.1.0a0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Count Data" href="count_data.html" />
+    <link rel="prev" title="Installation" href="install.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="osm-muliplex-graph">
+<h2>OSM Muliplex Graph<a class="headerlink" href="#osm-muliplex-graph" title="Permalink to this headline">¶</a></h2>
+<p>To generate an OSM multiplex graph for an OSM geocoded place from command line use
+<code class="docutils literal notranslate"><span class="pre">-g</span></code> to indicate graph generation, <code class="docutils literal notranslate"><span class="pre">-ga</span></code> to specify graph area, and <code class="docutils literal notranslate"><span class="pre">-gm</span></code> to
+specify graph modes. For example, if seeking the bike network for Corvallis, Oreogn:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">osm_multiplex</span> <span class="o">-</span><span class="n">g</span> <span class="o">-</span><span class="n">ga</span> <span class="s1">&#39;Corvallis, Oregon&#39;</span> <span class="o">-</span><span class="n">gm</span> <span class="s1">&#39;bike&#39;</span>
+</pre></div>
+</div>
+<p>The resulting networkx multidigraph is pickled as <code class="docutils literal notranslate"><span class="pre">./osm_multiplex/data/multiplex.gpickle</span></code></p>
+</div>
+<div class="section" id="anomaly-detection">
+<h2>Anomaly Detection<a class="headerlink" href="#anomaly-detection" title="Permalink to this headline">¶</a></h2>
+<p>To detect anomalies in independently sourced human mobility data from command line,
+specify the datasets and relevant fields. The anomalous weeks will be printed on
+screen as the location is processed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">osm_multiplex</span> <span class="o">-</span><span class="n">ad</span> <span class="o">-</span><span class="n">d1</span> <span class="s1">&#39;./osm_multiplex/data/dataset1.csv&#39;</span> <span class="o">-</span><span class="n">e1</span> <span class="s1">&#39;tagID&#39;</span> <span class="o">-</span><span class="n">ts1</span> <span class="s1">&#39;timestamp&#39;</span> <span class="o">-</span><span class="n">lat1</span> <span class="s1">&#39;lat&#39;</span> <span class="o">-</span><span class="n">lon1</span> <span class="s1">&#39;lon&#39;</span>
+<span class="o">-</span><span class="n">d2</span> <span class="s1">&#39;./osm_multiplex/data/dataset2.csv&#39;</span> <span class="o">-</span><span class="n">e2</span> <span class="s1">&#39;PIN&#39;</span> <span class="o">-</span><span class="n">ss2</span> <span class="s1">&#39;SessionStart_Epoch&#39;</span> <span class="o">-</span><span class="n">se2</span> <span class="s1">&#39;SessionEnd_Epoch&#39;</span>
+<span class="o">-</span><span class="n">lat2</span> <span class="s1">&#39;GPS_LAT&#39;</span> <span class="o">-</span><span class="n">lon2</span> <span class="s1">&#39;GPS_LONG&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">OSMmp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="count_data.html">Count Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lstm.html">LSTM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lstm_preprocessing.html">LSTM Preprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="osm_download.html">OSM Download</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="install.html" title="previous chapter">Installation</a></li>
+      <li>Next: <a href="count_data.html" title="next chapter">Count Data</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Sylvan Hoover.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/example.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
