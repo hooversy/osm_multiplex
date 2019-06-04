@@ -2,10 +2,10 @@
 from argparse import ArgumentParser
 
 # local imports
-from .osm_download import generate_multiplex
-from .count_data import process_data
-from .lstm_preprocessing import preprocess
-from .lstm import anomaly_detect
+from osm_download import generate_multiplex
+from count_data import process_data
+from lstm_preprocessing import preprocess
+from lstm import anomaly_detect
 
 parser = ArgumentParser(description='Utility for multiplex graph generation '
                                     'and anomaly detection for collected counts.'
@@ -17,15 +17,15 @@ parser.add_argument('-g', '--graph',
                     help='Output multiplex transportation graph'
                     )
 
-parser.add_argument('-a', '--graph-area',
+parser.add_argument('-ga', '--graph-area',
                     dest='graph_area',
                     required=False,
                     help='Specify area for multiplex graph generation'
                     )
 
-parser.add_argument('-a', '--graph-modes',
+parser.add_argument('-gm', '--graph-modes',
                     dest='graph_modes',
-                    type=list,
+                    type=str,
                     required=False,
                     help='Specify modes for multiplex graph generation'
                     )
@@ -179,14 +179,14 @@ parser.add_argument('-np', '--npmi',
 args = parser.parse_args()
 
 if args.graph == True:
-    multiplex = generate_multiplex(args.graph_area, args.graph_modes)
+    multiplex = generate_multiplex(args.graph_area, [args.graph_modes])
 elif args.anomaly_detect == True:
     likely_pairs = process_data(args.dataset1, args.dataset2, run_npmi=args.npmi,
-        element_id1=args.element_id1, timestamp1=args.timestamp1, session_start1=args.session_start1, session_end1=args.session_end1,
-        boardings1=args.boardings1, alightings1=args.alightings1, lat1=args.latitude1, lon1=args.longitude1,
-        element_id2=args.element_id2, timestamp2=args.timestamp2, session_start2=args.session_start2, session_end2=args.session_end2,
-        boardings2=args.boardings2, alightings2=args.alightings2, lat2=args.latitude2, lon2=args.longitude2
-        )
+    element_id1=args.element_id1, timestamp1=args.timestamp1, session_start1=args.session_start1, session_end1=args.session_end1,
+    boardings1=args.boardings1, alightings1=args.alightings1, lat1=args.latitude1, lon1=args.longitude1,
+    element_id2=args.element_id2, timestamp2=args.timestamp2, session_start2=args.session_start2, session_end2=args.session_end2,
+    boardings2=args.boardings2, alightings2=args.alightings2, lat2=args.latitude2, lon2=args.longitude2
+    )
     preprocessed = preprocess(likely_pairs)
     anomalies = anomaly_detect(preprocessed)
     print(anomalies)
