@@ -35,6 +35,8 @@ def generate_multiplex(area, modes):
 
     multiplex = merge_multiplex_nodes(separated_multiplex)
 
+    nx.write_gpickle(multiplex, './osm_multiplex/data/multiplex.gpickle')
+
     return multiplex
 
 def download_osm_layer(area, mode):
