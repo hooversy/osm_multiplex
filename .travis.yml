@@ -35,8 +35,7 @@ install:
   - conda list
 
 script:
-  - cd ./osm_multiplex
-  - python -m pytest -vv --cov=./;
+  - pytest -vv --cov=./;
 
 after_success:
   - coveralls
