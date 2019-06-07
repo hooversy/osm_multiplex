@@ -29,7 +29,6 @@ install:
   - conda install numpy
   - conda install osmnx
   - conda install pandas
-  - conda install pytables
   - conda install scikit-learn
   - conda info -a
   - conda list

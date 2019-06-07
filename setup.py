@@ -31,7 +31,6 @@ install_requires = [
     'numpy',
     'osmnx',
     'pandas',
-    'pytables',
     'scikit-learn'
 ]
 
