@@ -25,7 +25,7 @@ with open(path.join(here, 'CHANGELOG.md')) as changelog_file:
 
 long_description = readme + '\n\n' + changelog# + '\n\n' + citation
 
-install_requires = [,
+install_requires = [
     'keras',
     'networkx',
     'numpy',
