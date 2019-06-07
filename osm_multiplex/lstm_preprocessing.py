@@ -8,8 +8,8 @@ import osmnx as ox
 import numpy as np
 
 # local imports
-from . import count_data
-from . import osm_download
+import count_data
+import osm_download
 
 def spatial_grouping(dataframe, location_selection='1', mode='all'):
     """Assigns a single location to the data records. The data records can choose the location of dataset 1,

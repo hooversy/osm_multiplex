@@ -35,7 +35,7 @@ install:
   - conda list
 
 script:
-  - pytest -vv --cov=./;
+  - python -m pytest -vv --cov=./;
 
 after_success:
   - coveralls
