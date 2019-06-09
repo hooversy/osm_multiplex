@@ -1,0 +1,48 @@
+{% set name = "osm-multiplex" %}
+{% set version = "0.1.0a5" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+
+build:
+  number: 0
+  entry_points:
+    - osm_multiplex=osm_multiplex.__main__:main
+  script: python -m pip install --no-deps --ignore-installed ~/git/osm_multiplex
+
+requirements:
+  host:
+    - keras
+    - networkx
+    - numpy
+    - osmnx
+    - pandas
+    - pip
+    - python=3.6
+    - scikit-learn
+  run:
+    - keras
+    - networkx
+    - numpy
+    - osmnx
+    - pandas
+    - python=3.6
+    - scikit-learn
+
+test:
+  imports:
+    - osm_multiplex
+    - osm_multiplex.tests
+  commands:
+    - osm_multiplex --help
+  requires:
+    - pytest >=3.2.0
+    - pytest-cov
+
+about:
+  home: https://github.com/SoftwareDevEngResearch/osm_multiplex
+  license: MIT
+  license_family: MIT
+  summary: Transforming OpenStreetMap data into a multiplex transportation network
