@@ -23,3 +23,6 @@ screen as the location is processed::
     python osm_multiplex -ad -d1 './osm_multiplex/data/dataset1.csv' -e1 'tagID' -ts1 'timestamp' -lat1 'lat' -lon1 'lon'
     -d2 './osm_multiplex/data/dataset2.csv' -e2 'PIN' -ss2 'SessionStart_Epoch' -se2 'SessionEnd_Epoch'
     -lat2 'GPS_LAT' -lon2 'GPS_LONG'
+
+Note: Example data is not provided at this time due to its proprietary status. 
+Synthetic data is under development.
