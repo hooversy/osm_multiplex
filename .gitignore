@@ -109,3 +109,7 @@ venv.bak/
 *.npy
 *.h5
 */networks/*
+
+# vscode
+.vscode
+*.code-workspace
