@@ -170,3 +170,41 @@ def anomaly_detect(data):
         reconstruction_dict[location] = reconstruction_error
 
     return reconstruction_dict
+
+def weekly_dataframes(dataframe, interval='15T'):
+    """Generates a dictionary of dataframes with each k,v pair representing a location and the difference between the two
+    datasource counts.
+
+    Parameters
+    ----------
+    dataframe : pandas DataFrame
+        Contains count and difference values for all locations
+
+    interval : str
+        The time interval to be represented in the resulting dataframe. The default in 15 minutes, which results
+        in 672 entries for every week
+
+    Returns
+    -------
+    dataframes : dict
+        A dictionary of DataFrames with each k,v pair representing a location and the difference between the two
+        datasource counts.
+    """
+    grouped_dataframes = {}
+    pivoted_dataframes = {}
+    
+    for name, group in dataframe.groupby(['lat', 'lon']):
+        grouped_dataframes['location' + str(name)] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
+    for location, counts in grouped_dataframes.items():
+        gaps_filled = counts[['occupancy1', 'occupancy2']].asfreq(freq=interval, method='pad').reset_index(drop=False)
+        pivoted = pd.pivot_table(gaps_filled,
+                                 index=[gaps_filled['time'].dt.year, gaps_filled['time'].dt.week],
+                                 columns=gaps_filled.groupby(pd.Grouper(key='time', freq='W')).cumcount().add(1),
+                                 values=['occupancy1', 'occupancy2'],
+                                 aggfunc='sum')
+        pivoted.index.names = ['year', 'week']
+        useful_data = pivoted.iloc[1:-1] # removes likely incomplete first and last weeks
+        if not (useful_data.empty or useful_data.shape[0]<5):
+            pivoted_dataframes[location] = useful_data
+
+    return pivoted_dataframes
