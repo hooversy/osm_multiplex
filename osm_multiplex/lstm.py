@@ -136,8 +136,8 @@ def anomaly_detect(data):
     for location, dataframe in data.items():
         model_dir_path = os.path.join(THIS_DIR, './models')
         print(location)
-        samples = len(dataframe.index.codes[0])
-        timesteps = len(dataframe.columns.levels[1])
+        # samples = len(dataframe.index.codes[0])
+        # timesteps = len(dataframe.columns.levels[1])
         np_data_o1 = dataframe[['occupancy1']].values
         np_data_o2 = dataframe[['occupancy2']].values
         np_data_diff = np.abs(np_data_o1 - np_data_o2)
@@ -171,40 +171,80 @@ def anomaly_detect(data):
 
     return reconstruction_dict
 
-def weekly_dataframes(dataframe, interval='15T'):
-    """Generates a dictionary of dataframes with each k,v pair representing a location and the difference between the two
-    datasource counts.
+class datasamples(object):
+    def group_dataframes(self, dataframe):
+        grouped_dataframes = {}
 
-    Parameters
-    ----------
-    dataframe : pandas DataFrame
-        Contains count and difference values for all locations
+        for name, group in dataframe.groupby(['lat', 'lon']):
+            grouped_dataframes['location' + str(name)] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
 
-    interval : str
-        The time interval to be represented in the resulting dataframe. The default in 15 minutes, which results
-        in 672 entries for every week
+        return grouped_dataframes
 
-    Returns
-    -------
-    dataframes : dict
-        A dictionary of DataFrames with each k,v pair representing a location and the difference between the two
+    def gaps_filler(self, dataframe, interval, method=None, fill_value=None):
+        gaps_filled = dataframe[['occupancy1', 'occupancy2']].asfreq(freq=interval, method=method, fill_value=fill_value).reset_index(drop=False)
+
+        return gaps_filled
+
+    def weekly_sample(self, dataframe, interval='15T'):
+        """Generates a dictionary of dataframes with each k,v pair representing a location and the difference between the two
         datasource counts.
-    """
-    grouped_dataframes = {}
-    pivoted_dataframes = {}
-    
-    for name, group in dataframe.groupby(['lat', 'lon']):
-        grouped_dataframes['location' + str(name)] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
-    for location, counts in grouped_dataframes.items():
-        gaps_filled = counts[['occupancy1', 'occupancy2']].asfreq(freq=interval, method='pad').reset_index(drop=False)
-        pivoted = pd.pivot_table(gaps_filled,
-                                 index=[gaps_filled['time'].dt.year, gaps_filled['time'].dt.week],
-                                 columns=gaps_filled.groupby(pd.Grouper(key='time', freq='W')).cumcount().add(1),
-                                 values=['occupancy1', 'occupancy2'],
-                                 aggfunc='sum')
-        pivoted.index.names = ['year', 'week']
-        useful_data = pivoted.iloc[1:-1] # removes likely incomplete first and last weeks
-        if not (useful_data.empty or useful_data.shape[0]<5):
-            pivoted_dataframes[location] = useful_data
 
-    return pivoted_dataframes
+        Parameters
+        ----------
+        dataframe : pandas DataFrame
+            Contains count and difference values for all locations
+
+        interval : str
+            The time interval to be represented in the resulting dataframe. The default in 15 minutes, which results
+            in 672 entries for every week
+
+        Returns
+        -------
+        dataframes : dict
+            A dictionary of DataFrames with each k,v pair representing a location and the difference between the two
+            datasource counts.
+        """
+        
+        pivoted_dataframes = {}
+        
+        grouped_dataframes = self.group_dataframes(dataframe)
+        
+        for location, counts in grouped_dataframes.items():
+            gaps_filled = self.gaps_filler(counts, interval)
+            pivoted = pd.pivot_table(gaps_filled,
+                                    index=[gaps_filled['time'].dt.year, gaps_filled['time'].dt.week],
+                                    columns=gaps_filled.groupby(pd.Grouper(key='time', freq='W')).cumcount().add(1),
+                                    values=['occupancy1', 'occupancy2'],
+                                    aggfunc='sum')
+            pivoted.index.names = ['year', 'week']
+            useful_data = pivoted.iloc[1:-1] # removes likely incomplete first and last weeks
+            if not (useful_data.empty or useful_data.shape[0]<5):
+                pivoted_dataframes[location] = useful_data
+
+        return pivoted_dataframes
+
+    def rolling_sample(self, dataframe, interval='15T', length=2688):
+        """Generates a dictionary
+        """
+        
+        pivoted_dataframes = {}
+        
+        grouped_dataframes = self.group_dataframes(dataframe)
+
+        for location, counts in grouped_dataframes.items():
+            gaps_filled = self.gaps_filler(counts, interval)
+
+            pivoted1 = pd.DataFrame(index=gaps_filled['time'], columns=range(length))
+            pivoted2 = pd.DataFrame(index=gaps_filled['time'], columns=range(length))
+            pivoted1.columns = pd.MultiIndex.from_product([gaps_filled.columns[1], pivoted1.columns])
+            pivoted2.columns = pd.MultiIndex.from_product([gaps_filled.columns[2], pivoted2.columns])
+            pivoted = pd.concat([pivoted1, pivoted2], axis = 1)
+            # inefficient looping; need to find better approach
+            for source in pivoted.columns.levels[0]:
+                for time_index in range(len(pivoted.index)):
+                    pivoted.iloc[time_index][source] = gaps_filled.iloc[time_index:time_index+length][source]
+            useful_data = pivoted.dropna()[:-1]
+            if not (useful_data.empty or useful_data.shape[0]<5):
+                pivoted_dataframes[location] = useful_data
+
+        return pivoted_dataframes

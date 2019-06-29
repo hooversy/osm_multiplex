@@ -40,13 +40,14 @@ class TestWeeklyDataframes:
                      ['2018-03-24 05:00:00', 44.44, 55.55, 2, 2],
                      ['2018-03-24 05:30:00', 44.44, 55.55, 8, 8],
                      ['2018-03-24 06:00:00', 44.44, 55.55, 6, 5],
-                     ['2018-03-24 06:30:00', 44.44, 55.55, 7, 8],
-                     ['2018-03-24 07:00:00', 44.44, 55.55, 2, 4],
-                     ['2018-03-24 07:30:00', 44.44, 55.55, 5, 4],]
+                     ['2018-04-24 06:30:00', 44.44, 55.55, 7, 8],
+                     ['2018-05-24 07:00:00', 44.44, 55.55, 2, 4],
+                     ['2018-06-24 07:30:00', 44.44, 55.55, 5, 4],]
         data = pd.DataFrame(data_list, columns=['time', 'lat', 'lon', 'occupancy1', 'occupancy2'])
         data['time'] =  pd.to_datetime(data['time'])
         data_multi = data.set_index(['time', 'lat', 'lon'])
 
-        test = lstm.weekly_dataframes(data_multi)
+        sampler = lstm.datasamples()
+        test_weekly = sampler.weekly_sample(data_multi)
 
-        assert test != None # need a better assertion, but can't find how to hash a dictionary of dataframes
+        assert test_weekly != None # need a better assertion, but can't find how to hash a dictionary of dataframes
