@@ -141,11 +141,12 @@ def anomaly_detect(data):
         np_data_o1 = dataframe[['occupancy1']].values
         np_data_o2 = dataframe[['occupancy2']].values
         np_data_diff = np.abs(np_data_o1 - np_data_o2)
+        
         scaler = MinMaxScaler()
-        np_data_o1 = scaler.fit_transform(np_data_o1)
-        np_data_o2 = scaler.fit_transform(np_data_o2)
-        np_data_diff = scaler.fit_transform(np_data_diff)
+        for table in [np_data_o1, np_data_o2, np_data_diff]:
+            table = scaler.fit_transform(table)
         np_data = np.stack((np_data_o1, np_data_o2, np_data_diff), axis=-1)
+        
         print(str(np_data.shape[0]) + ' weeks processing') 
 
         ae = LstmAutoEncoder()
@@ -243,6 +244,7 @@ class datasamples(object):
             for source in pivoted.columns.levels[0]:
                 for time_index in range(len(pivoted.index)):
                     pivoted.iloc[time_index][source] = gaps_filled.iloc[time_index:time_index+length][source]
+            
             useful_data = pivoted.dropna()[:-1]
             if not (useful_data.empty or useful_data.shape[0]<5):
                 pivoted_dataframes[location] = useful_data
