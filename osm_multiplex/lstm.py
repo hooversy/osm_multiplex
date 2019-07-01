@@ -237,8 +237,8 @@ class datasamples(object):
 
             pivoted1 = pd.DataFrame(index=gaps_filled['time'], columns=range(length))
             pivoted2 = pd.DataFrame(index=gaps_filled['time'], columns=range(length))
-            pivoted1.columns = pd.MultiIndex.from_product([gaps_filled.columns[1], pivoted1.columns])
-            pivoted2.columns = pd.MultiIndex.from_product([gaps_filled.columns[2], pivoted2.columns])
+            pivoted1.columns = pd.MultiIndex.from_product([[gaps_filled.columns[1]], pivoted1.columns])
+            pivoted2.columns = pd.MultiIndex.from_product([[gaps_filled.columns[2]], pivoted2.columns])
             pivoted = pd.concat([pivoted1, pivoted2], axis = 1)
             # inefficient looping; need to find better approach
             for source in pivoted.columns.levels[0]:
