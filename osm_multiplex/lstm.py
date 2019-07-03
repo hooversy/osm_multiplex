@@ -114,30 +114,13 @@ class LstmAutoEncoder(object):
         dist = self.predict(timeseries_dataset)
         return zip(dist >= self.threshold, dist)
 
-def anomaly_detect(data):
-    """Takes a dictionary of location, data pairs containing a series of temporal sample and assesses likely
-    anomalous samples. The resulting dictionary can be used to identify locations and time periods of likely
-    anomalous data collection.
+class anomalydetect(object):
 
-    Parameters
-    ----------
-    data : dict
-        Each key in the dictionary is a specific location with the value being a DataFrame of two time-series
-        representing collected data from each source
+    def __init__(self):
+        self.ae = LstmAutoEncoder()
+        self.model_dir_path = os.path.join(THIS_DIR, './models')
 
-
-    Returns
-    -------
-    reconstruction_dict : dict
-        Each key is the location and error threshold with the value being a list of the reconstruction error 
-        for each sample in the location
-    """
-    reconstruction_dict = {}
-    for location, dataframe in data.items():
-        model_dir_path = os.path.join(THIS_DIR, './models')
-        print(location)
-        # samples = len(dataframe.index.codes[0])
-        # timesteps = len(dataframe.columns.levels[1])
+    def construct_npdata(self, dataframe):
         np_data_o1 = dataframe[['occupancy1']].values
         np_data_o2 = dataframe[['occupancy2']].values
         np_data_diff = np.abs(np_data_o1 - np_data_o2)
@@ -146,31 +129,107 @@ def anomaly_detect(data):
         for table in [np_data_o1, np_data_o2, np_data_diff]:
             table = scaler.fit_transform(table)
         np_data = np.stack((np_data_o1, np_data_o2, np_data_diff), axis=-1)
-        
-        print(str(np_data.shape[0]) + ' weeks processing') 
 
-        ae = LstmAutoEncoder()
+        return np_data
 
+    def fit_detect(self, np_data):
         # fit the data and save model into model_dir_path
-        ae.fit(np_data[:, :, :], model_dir_path=model_dir_path, std_dev_threshold=1.5)
+        self.ae.fit(np_data[:, :, :], model_dir_path=self.model_dir_path, std_dev_threshold=1.5)
 
         # load back the model saved in model_dir_path detect anomaly
-        ae.load_model(model_dir_path)
-        anomaly_information = ae.anomaly(np_data[:, :, :])
-        reconstruction_error = {}
-        if ae.threshold == 0.0:
-            continue
-        else:
-            reconstruction_error['threshold'] = ae.threshold
-        years = list(dataframe.index.get_level_values(0))
-        weeks = list(dataframe.index.get_level_values(1))
-        for idx, (is_anomaly, dist) in enumerate(anomaly_information):
-            reconstruction_error[str(years[idx]) + ', ' +str(weeks[idx])] = [is_anomaly, dist]
-            if is_anomaly == True:
-                print(location + ' year ' + str(years[idx]) + ', week ' + str(weeks[idx]) + ' is anomalous')
-        reconstruction_dict[location] = reconstruction_error
+        self.ae.load_model(self.model_dir_path)
+        anomaly_information = self.ae.anomaly(np_data[:, :, :])
 
-    return reconstruction_dict
+        return anomaly_information
+
+    def week_anomaly_detect(self, data):
+        """Takes a dictionary of location, data pairs containing a series of temporal sample and assesses likely
+        anomalous samples. The resulting dictionary can be used to identify locations and time periods of likely
+        anomalous data collection.
+
+        Parameters
+        ----------
+        data : dict
+            Each key in the dictionary is a specific location with the value being a DataFrame of two time-series
+            representing collected data from each source
+
+
+        Returns
+        -------
+        reconstruction_dict : dict
+            Each key is the location and error threshold with the value being a list of the reconstruction error 
+            for each sample in the location
+        """
+
+        reconstruction_dict = {}
+        for location, dataframe in data.items():
+            # samples = len(dataframe.index.codes[0])
+            # timesteps = len(dataframe.columns.levels[1])
+
+            np_data = self.construct_npdata(dataframe)
+            
+            print('For ' + str(location) + ', ' + str(np_data.shape[0]) + ' weeks processing') 
+
+            anomaly_information = self.fit_detect(np_data)
+
+            reconstruction_error = {}
+            if self.ae.threshold == 0.0:
+                continue
+            else:
+                reconstruction_error['threshold'] = self.ae.threshold
+            years = dataframe.index.get_level_values(0).tolist()
+            weeks = dataframe.index.get_level_values(1).tolist()
+            for idx, (is_anomaly, dist) in enumerate(anomaly_information):
+                reconstruction_error[str(years[idx]) + ', ' +str(weeks[idx])] = [is_anomaly, dist]
+                if is_anomaly == True:
+                    print(location + ' year ' + str(years[idx]) + ', week ' + str(weeks[idx]) + ' is anomalous')
+            reconstruction_dict[location] = reconstruction_error
+
+        return reconstruction_dict
+
+    def rolling_anomaly_detect(self, data):
+        """Takes a dictionary of location, data pairs containing a series of temporal sample and assesses likely
+        anomalous samples. The resulting dictionary can be used to identify locations and time periods of likely
+        anomalous data collection.
+
+        Parameters
+        ----------
+        data : dict
+            Each key in the dictionary is a specific location with the value being a DataFrame of two time-series
+            representing collected data from each source
+
+
+        Returns
+        -------
+        reconstruction_dict : dict
+            Each key is the location and error threshold with the value being a list of the reconstruction error 
+            for each sample in the location
+        """
+        
+        reconstruction_dict = {}
+        for location, dataframe in data.items():
+            # samples = len(dataframe.index.codes[0])
+            # timesteps = len(dataframe.columns.levels[1])
+
+            np_data = self.construct_npdata(dataframe)
+            
+            print('For ' + str(location) + ', ' + str(np_data.shape[0]) + ' steps processing') 
+
+            anomaly_information = self.fit_detect(np_data)
+
+            reconstruction_error = {}
+            if self.ae.threshold == 0.0:
+                continue
+            else:
+                reconstruction_error['threshold'] = self.ae.threshold
+            time = dataframe.index.tolist()
+            for idx, (is_anomaly, dist) in enumerate(anomaly_information):
+                reconstruction_error[str(time[idx])] = [is_anomaly, dist]
+                if is_anomaly == True:
+                    print(location + ' at ' + str(time[idx]) + ' is anomalous')
+            reconstruction_dict[location] = reconstruction_error
+
+        return reconstruction_dict
 
 class datasamples(object):
     def group_dataframes(self, dataframe):
@@ -233,18 +292,22 @@ class datasamples(object):
         grouped_dataframes = self.group_dataframes(dataframe)
 
         for location, counts in grouped_dataframes.items():
-            gaps_filled = self.gaps_filler(counts, interval)
+            gaps_filled = self.gaps_filler(counts, interval, fill_value=0)
 
             pivoted1 = pd.DataFrame(index=gaps_filled['time'], columns=range(length))
             pivoted2 = pd.DataFrame(index=gaps_filled['time'], columns=range(length))
-            pivoted1.columns = pd.MultiIndex.from_product([[gaps_filled.columns[1]], pivoted1.columns])
-            pivoted2.columns = pd.MultiIndex.from_product([[gaps_filled.columns[2]], pivoted2.columns])
+            pivoted1.columns = pd.MultiIndex.from_product([['occupancy1'], pivoted1.columns])
+            pivoted2.columns = pd.MultiIndex.from_product([['occupancy2'], pivoted2.columns])
             pivoted = pd.concat([pivoted1, pivoted2], axis = 1)
             # inefficient looping; need to find better approach
-            for source in pivoted.columns.levels[0]:
-                for time_index in range(len(pivoted.index)):
-                    pivoted.iloc[time_index][source] = gaps_filled.iloc[time_index:time_index+length][source]
-            
+            for time_index in range(len(pivoted.index)):
+                pivot1 = gaps_filled.occupancy1.iloc[time_index:time_index+length].tolist()
+                pivot2 = gaps_filled.occupancy2.iloc[time_index:time_index+length].tolist()
+                if len(pivot1) == length and len(pivot2) == length:
+                    pivoted.occupancy1.iloc[time_index] = pivot1
+                    pivoted.occupancy2.iloc[time_index] = pivot2
+                else:
+                    break
             useful_data = pivoted.dropna()[:-1]
             if not (useful_data.empty or useful_data.shape[0]<5):
                 pivoted_dataframes[location] = useful_data
