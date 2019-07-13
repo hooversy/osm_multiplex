@@ -6,6 +6,7 @@ based on: https://github.com/chen0040/keras-anomaly-detection/blob/master/keras_
 
 # standard libraries
 import os
+import sys
 
 # third-party libraries
 
@@ -15,6 +16,7 @@ from keras.callbacks import ModelCheckpoint
 from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import numpy as np
+import csv
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -232,11 +234,24 @@ class anomalydetect(object):
         return reconstruction_dict
 
 class datasamples(object):
-    def group_dataframes(self, dataframe):
+    
+    def create_loc_dic(self, locations):
+        with open(locations, mode='r') as f:
+            reader = csv.reader(f)
+            loc_dic = {(float(row[1]), float(row[2])):row[0] for row in reader}
+        return loc_dic
+
+    def group_dataframes(self, dataframe, locations):
         grouped_dataframes = {}
 
+        if locations is not None:
+            location_dict = self.create_loc_dic(locations)
+        
         for name, group in dataframe.groupby(['lat', 'lon']):
-            grouped_dataframes['location' + str(name)] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
+            try:
+                grouped_dataframes['location ' + str(location_dict[name])] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
+            except:
+                grouped_dataframes['location ' + str(name)] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
 
         return grouped_dataframes
 
@@ -245,7 +260,7 @@ class datasamples(object):
 
         return gaps_filled
 
-    def weekly_sample(self, dataframe, interval='15T'):
+    def weekly_sample(self, dataframe, interval='15T', locations=None):
         """Generates a dictionary of dataframes with each k,v pair representing a location and the difference between the two
         datasource counts.
 
@@ -267,7 +282,7 @@ class datasamples(object):
         
         pivoted_dataframes = {}
         
-        grouped_dataframes = self.group_dataframes(dataframe)
+        grouped_dataframes = self.group_dataframes(dataframe, locations)
         
         for location, counts in grouped_dataframes.items():
             gaps_filled = self.gaps_filler(counts, interval)
@@ -283,13 +298,13 @@ class datasamples(object):
 
         return pivoted_dataframes
 
-    def rolling_sample(self, dataframe, interval='15T', length=2688):
+    def rolling_sample(self, dataframe, interval='15T', length=2688, locations=None):
         """Generates a dictionary
         """
         
         pivoted_dataframes = {}
         
-        grouped_dataframes = self.group_dataframes(dataframe)
+        grouped_dataframes = self.group_dataframes(dataframe, locations)
 
         for location, counts in grouped_dataframes.items():
             gaps_filled = self.gaps_filler(counts, interval, fill_value=0)
@@ -300,7 +315,10 @@ class datasamples(object):
             pivoted2.columns = pd.MultiIndex.from_product([['occupancy2'], pivoted2.columns])
             pivoted = pd.concat([pivoted1, pivoted2], axis = 1)
             # inefficient looping; need to find better approach
-            for time_index in range(len(pivoted.index)):
+            index_length = len(pivoted.index)
+            for time_index in range(index_length):
+                if time_index % 50 == 0:
+                    print("Processing row " + str(time_index) + " of " + str(index_length))
                 pivot1 = gaps_filled.occupancy1.iloc[time_index:time_index+length].tolist()
                 pivot2 = gaps_filled.occupancy2.iloc[time_index:time_index+length].tolist()
                 if len(pivot1) == length and len(pivot2) == length:
@@ -313,3 +331,17 @@ class datasamples(object):
                 pivoted_dataframes[location] = useful_data
 
         return pivoted_dataframes
+
+
+def anomaly_detect(preprocessed_dataframe, detection_type="weekly", locations=None):
+    sampler = datasamples()
+    ad = anomalydetect()
+
+    if detection_type == "weekly":
+        sampled = sampler.weekly_sample(preprocessed_dataframe, locations=locations)
+        anomaly_detection = ad.week_anomaly_detect(sampled)
+    elif detection_type == "rolling":
+        sampled = sampler.rolling_sample(preprocessed_dataframe, locations=locations)
+        anomaly_detection = ad.rolling_anomaly_detect(sampled)
+
+    return anomaly_detection
