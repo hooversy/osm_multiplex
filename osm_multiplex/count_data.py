@@ -346,6 +346,7 @@ def pairwise_filter(data1, data2, session_limit=600, detection_distance=100, det
     data1_epoch = standardize_epoch(data1)
     data2_epoch = standardize_epoch(data2)
 
+    print("Filtering by session length")
     data1_session_filter = session_length_filter(data1_epoch, session_max=session_limit)
     data2_session_filter = session_length_filter(data2_epoch, session_max=session_limit)
     
@@ -354,8 +355,10 @@ def pairwise_filter(data1, data2, session_limit=600, detection_distance=100, det
     data2_suffix = data2_session_filter.add_suffix('2')
 
     # range join includes filtering for time proximity of recorded event
+    print("Time-based range joining")
     df_range_join = time_range_join_sql(data1_suffix, data2_suffix, time_range=detection_time)
 
+    print("Filtering on distance")
     candidate_pairs = haversine_dist_filter(df_range_join, dist_max=detection_distance)
 
     return candidate_pairs
@@ -419,10 +422,12 @@ def process_data(data1, data2, run_npmi=False,
     element_id1=None, timestamp1=None, session_start1=None, session_end1=None, boardings1=None, alightings1=None, lat1=None, lon1=None,
     element_id2=None, timestamp2=None, session_start2=None, session_end2=None, boardings2=None, alightings2=None, lat2=None, lon2=None):
     
+    print("Converting to DataFrames")
     df1 = csv_to_df(data1, element_id=element_id1, timestamp=timestamp1, session_start=session_start1, session_end=session_end1,
                     boardings=boardings1, alightings=alightings1, lat=lat1, lon=lon1)
     df2 = csv_to_df(data2, element_id=element_id2, timestamp=timestamp2, session_start=session_start2, session_end=session_end2,
                     boardings=boardings2, alightings=alightings2, lat=lat2, lon=lon2)
+    
     paired = pairwise_filter(df1, df2)
     # if only individually identified data, then process for npmi tagging
     if run_npmi==True:
