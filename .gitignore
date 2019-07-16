@@ -109,7 +109,7 @@ venv.bak/
 *.npy
 *.h5
 */networks/*
-osm_multiplex/models/lstm-auto-encoder-architecture.json
+*.json
 
 # vscode
 .vscode
