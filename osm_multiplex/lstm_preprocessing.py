@@ -95,15 +95,17 @@ def occupancy_level(dataframe):
         Records that now include an occupancy value indicative of the presence that detected by that system
     """
 
-    if 'boardings1' in dataframe.columns:
-        dataframe = daily_cumulative(dataframe, '1')
-    else:
-        dataframe['occupancy1'] = 1
+    if 'occupancy1' not in dataframe.columns:
+        if 'boardings1' in dataframe.columns:
+            dataframe = daily_cumulative(dataframe, '1')
+        else:
+            dataframe['occupancy1'] = 1
 
-    if 'boardings2' in dataframe.columns:
-        dataframe = daily_cumulative(dataframe, '2')
-    else:
-        dataframe['occupancy2'] = 1
+    if 'occupancy2' not in dataframe.columns:
+        if 'boardings2' in dataframe.columns:
+            dataframe = daily_cumulative(dataframe, '2')
+        else:
+            dataframe['occupancy2'] = 1
 
     return dataframe
 
@@ -155,7 +157,7 @@ def daily_cumulative(dataframe, identifier):
 
     return sum_occupancy
 
-def time_grouping(dataframe, interval='15T', time_selection='1'):
+def time_grouping(dataframe, interval='60T', time_selection='1'):
     """Groups data by temporal interval
 
     Parameters

@@ -9,7 +9,7 @@ import pandas as pd
 import sqlite3
 
 def csv_to_df(data, element_id=None, timestamp=None, session_start=None, session_end=None,
-              boardings=None, alightings=None, lat=None, lon=None):
+              boardings=None, alightings=None, occupancy=None, lat=None, lon=None):
     """Imports counter data as csv and creates pandas dataframe
 
     Parameters
@@ -49,28 +49,38 @@ def csv_to_df(data, element_id=None, timestamp=None, session_start=None, session
 
     if timestamp == None:
         df_imported_headers = pd.read_csv(data, parse_dates=[session_start, session_end], infer_datetime_format=True)
-        if boardings == None:
-            df_selected_columns = df_imported_headers[[element_id, session_start, session_end, lat, lon]].copy()
-            df_fixed_headers = df_selected_columns.rename(index=str, 
-                columns={element_id: "element_id", session_start: "session_start", session_end: "session_end",
-                         lat: "lat", lon: "lon"})
-        else:
+        if boardings != None:
             df_selected_columns = df_imported_headers[[element_id, session_start, session_end, boardings, alightings, lat, lon]].copy()
             df_fixed_headers = df_selected_columns.rename(index=str, 
-                columns={element_id: "element_id", session_start: "session_start", session_end: "session_end",
-                         boardings:'boardings', alightings:'alightings', lat: "lat", lon: "lon"})
+                columns={element_id: 'element_id', session_start: 'session_start', session_end: 'session_end',
+                         boardings:'boardings', alightings:'alightings', lat: 'lat', lon: 'lon'})
+        elif occupancy != None:
+            df_selected_columns = df_imported_headers[[element_id, session_start, session_end, occupancy, lat, lon]].copy()
+            df_fixed_headers = df_selected_columns.rename(index=str, 
+                columns={element_id: 'element_id', session_start: 'session_start', session_end: 'session_end',
+                         occupancy: 'occupancy', lat: 'lat', lon: 'lon'})
+        else:
+            df_selected_columns = df_imported_headers[[element_id, session_start, session_end, lat, lon]].copy()
+            df_fixed_headers = df_selected_columns.rename(index=str, 
+                columns={element_id: 'element_id', session_start: 'session_start', session_end: 'session_end',
+                         lat: 'lat', lon: 'lon'})
 
     else:
         df_imported_headers = pd.read_csv(data, parse_dates=[timestamp], infer_datetime_format=True)
-        if boardings == None:
-            df_selected_columns = df_imported_headers[[element_id, timestamp, lat, lon]].copy()
-            df_fixed_headers = df_selected_columns.rename(index=str, 
-                columns={element_id:'element_id', timestamp:'timestamp', lat:'lat', lon:'lon'})
-        else:
+        if boardings != None:
             df_selected_columns = df_imported_headers[[element_id, timestamp, boardings, alightings, lat, lon]].copy()
             df_fixed_headers = df_selected_columns.rename(index=str, 
                 columns={element_id:'element_id', timestamp: 'timestamp', boardings:'boardings', alightings:'alightings',
                          lat:'lat', lon:'lon'})
+        elif occupancy != None:
+            df_selected_columns = df_imported_headers[[element_id, timestamp, occupancy, lat, lon]].copy()
+            df_fixed_headers = df_selected_columns.rename(index=str, 
+                columns={element_id:'element_id', timestamp: 'timestamp', occupancy: 'occupancy',
+                         lat:'lat', lon:'lon'})
+        else:
+            df_selected_columns = df_imported_headers[[element_id, timestamp, lat, lon]].copy()
+            df_fixed_headers = df_selected_columns.rename(index=str, 
+                columns={element_id:'element_id', timestamp:'timestamp', lat:'lat', lon:'lon'})
     
     return df_fixed_headers
 
@@ -419,14 +429,14 @@ def npmi_data_filter(count_data, npmi_results, min_npmi=0.5):
     return selected_data
 
 def process_data(data1, data2, run_npmi=False, 
-    element_id1=None, timestamp1=None, session_start1=None, session_end1=None, boardings1=None, alightings1=None, lat1=None, lon1=None,
-    element_id2=None, timestamp2=None, session_start2=None, session_end2=None, boardings2=None, alightings2=None, lat2=None, lon2=None):
+    element_id1=None, timestamp1=None, session_start1=None, session_end1=None, boardings1=None, alightings1=None, occupancy1=None, lat1=None, lon1=None,
+    element_id2=None, timestamp2=None, session_start2=None, session_end2=None, boardings2=None, alightings2=None, occupancy2=None, lat2=None, lon2=None):
     
     print("Converting to DataFrames")
     df1 = csv_to_df(data1, element_id=element_id1, timestamp=timestamp1, session_start=session_start1, session_end=session_end1,
-                    boardings=boardings1, alightings=alightings1, lat=lat1, lon=lon1)
+                    boardings=boardings1, alightings=alightings1, occupancy=occupancy1, lat=lat1, lon=lon1)
     df2 = csv_to_df(data2, element_id=element_id2, timestamp=timestamp2, session_start=session_start2, session_end=session_end2,
-                    boardings=boardings2, alightings=alightings2, lat=lat2, lon=lon2)
+                    boardings=boardings2, alightings=alightings2, occupancy=occupancy2, lat=lat2, lon=lon2)
     
     paired = pairwise_filter(df1, df2)
     # if only individually identified data, then process for npmi tagging
