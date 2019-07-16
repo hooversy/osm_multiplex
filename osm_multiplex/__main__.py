@@ -1,6 +1,7 @@
 # third-party libraries
 from argparse import ArgumentParser
 from networkx import write_gpickle
+import pickle
 
 # local imports
 from osm_download import generate_multiplex
@@ -142,6 +143,20 @@ parser.add_argument('-a2', '--alightings2',
                     help='Alightings for dataset2'
                     )
 
+parser.add_argument('-o1', '--occupancy1',
+                    type=str,
+                    default=None,
+                    required=False,
+                    help='Occupancy for dataset1'
+                    )
+
+parser.add_argument('-o2', '--occupancy2',
+                    type=str,
+                    default=None,
+                    required=False,
+                    help='Occupancy for dataset2'
+                    )
+
 parser.add_argument('-lat1', '--latitude1',
                     type=str,
                     default=None,
@@ -201,9 +216,11 @@ elif args.anomaly_detect == True:
     print("Merging datasets")
     likely_pairs = process_data(args.dataset1, args.dataset2, run_npmi=args.npmi,
     element_id1=args.element_id1, timestamp1=args.timestamp1, session_start1=args.session_start1, session_end1=args.session_end1,
-    boardings1=args.boardings1, alightings1=args.alightings1, lat1=args.latitude1, lon1=args.longitude1,
+    boardings1=args.boardings1, alightings1=args.alightings1, occupancy1=args.occupancy1,
+    lat1=args.latitude1, lon1=args.longitude1,
     element_id2=args.element_id2, timestamp2=args.timestamp2, session_start2=args.session_start2, session_end2=args.session_end2,
-    boardings2=args.boardings2, alightings2=args.alightings2, lat2=args.latitude2, lon2=args.longitude2
+    boardings2=args.boardings2, alightings2=args.alightings2, occupancy2=args.occupancy2,
+    lat2=args.latitude2, lon2=args.longitude2
     )
     print("Preprocessing for LSTM")
     preprocessed = preprocess(likely_pairs)
@@ -212,6 +229,6 @@ elif args.anomaly_detect == True:
         anomalies = anomaly_detect(preprocessed, "rolling", locations=args.locations)
     else:
         anomalies = anomaly_detect(preprocessed, locations=args.locations)
-    print(anomalies)
+    pickle.dump(anomalies, open('./osm_multiplex/data/anomaly_results.pickle', 'wb'))
 else:
     raise Exception('No action specified')
