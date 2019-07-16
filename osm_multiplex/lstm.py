@@ -17,6 +17,7 @@ from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import numpy as np
 import csv
+import pickle
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,8 +36,9 @@ class LstmAutoEncoder(object):
     @staticmethod
     def create_model(time_window_size, metric):
         model = Sequential()
-        model.add(LSTM(units=128, input_shape=(time_window_size, 3), return_sequences=False))
-
+        model.add(LSTM(units=256, input_shape=(time_window_size, 3), return_sequences=True))
+        model.add(LSTM(units=256, return_sequences=True))
+        model.add(LSTM(units=256, return_sequences=False))
         model.add(Dense(units=time_window_size, activation='linear'))
 
         model.compile(optimizer='adam', loss='mean_squared_error', metrics=[metric])
@@ -76,7 +78,7 @@ class LstmAutoEncoder(object):
         if metric is None:
             metric = 'mean_absolute_error'
         if std_dev_threshold is None:
-            std_dev_threshold = 1.5
+            std_dev_threshold = 2.0
 
         self.metric = metric
         self.time_window_size = timeseries_dataset.shape[1]
@@ -164,6 +166,8 @@ class anomalydetect(object):
         """
 
         reconstruction_dict = {}
+        pickle.dump(data, open('./osm_multiplex/data/detection_data.pickle', 'wb'))
+
         for location, dataframe in data.items():
             # samples = len(dataframe.index.codes[0])
             # timesteps = len(dataframe.columns.levels[1])
@@ -260,7 +264,7 @@ class datasamples(object):
 
         return gaps_filled
 
-    def weekly_sample(self, dataframe, interval='15T', locations=None):
+    def weekly_sample(self, dataframe, interval='60T', locations=None):
         """Generates a dictionary of dataframes with each k,v pair representing a location and the difference between the two
         datasource counts.
 
@@ -298,7 +302,7 @@ class datasamples(object):
 
         return pivoted_dataframes
 
-    def rolling_sample(self, dataframe, interval='15T', length=2688, locations=None):
+    def rolling_sample(self, dataframe, interval='60T', length=672, locations=None):
         """Generates a dictionary
         """
         
