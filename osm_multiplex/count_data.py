@@ -256,6 +256,49 @@ def time_range_join_sql(data1, data2, time_range=60):
 
     return df_range_join
 
+def time_range_join_cartesian(data1, data2, time_range=60):
+    """Performs a range join by perfoming a cartesian product and then filtering
+
+    Parameters
+    ----------
+    data1 : pandas DataFrame
+        DataFrame of the first dataset
+
+    data2 : pandas DataFrame
+        DataFrame of the second dataset
+
+    time_range : int
+        Value for time buffer indicating range in join
+    
+    Returns
+    -------
+    df_range_join : pandas DataFrame
+        DataFrame with a range join of the two datasets based on time
+    """
+    try:
+        data1['time'] = data1['timestamp1']
+    except:
+        data1['time'] = data1['session_start1']
+
+    try:
+        data2['time'] = data2['timestamp2']
+    except:
+        data2['time'] = data2['session_start2']
+
+    data2['time_high'] = data2['time'] + time_range
+    data2['time_low'] = data2['time'] - time_range
+    data2 = data2.drop(columns=['time'])
+
+    data1['key'] = 1
+    data2['key'] = 1
+
+    merged = pd.merge(data1, data2, on='key')
+    filtered = merged[(merged['timestamp1'] <= merged['time_high']) & (merged['timestamp1'] >= merged['time_low'])]
+
+    df_range_join = filtered.drop(columns=['time', 'time_high', 'time_low', 'key'])
+
+    return df_range_join
+
 # def time_range_join_intervalindex(data1, data2, time_range=60):
 #     """Performs a range join based on indicated time plus/minus `time_range` buffer. This is an attempt to use interval
 #     indexing that exists in pandas, but for the moment can only serve as a merge and not a join so multiple records matches
@@ -366,7 +409,7 @@ def pairwise_filter(data1, data2, session_limit=600, detection_distance=100, det
 
     # range join includes filtering for time proximity of recorded event
     print("Time-based range joining")
-    df_range_join = time_range_join_sql(data1_suffix, data2_suffix, time_range=detection_time)
+    df_range_join = time_range_join_cartesian(data1_suffix, data2_suffix, time_range=detection_time)
 
     print("Filtering on distance")
     candidate_pairs = haversine_dist_filter(df_range_join, dist_max=detection_distance)
