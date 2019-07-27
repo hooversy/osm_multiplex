@@ -6,7 +6,11 @@
 
 import numpy as np
 import pandas as pd
+import pickle
 import sqlite3
+import pyspark
+import findspark
+# import dask.dataframe as dd
 
 def csv_to_df(data, element_id=None, timestamp=None, session_start=None, session_end=None,
               boardings=None, alightings=None, occupancy=None, lat=None, lon=None):
@@ -102,8 +106,8 @@ def standardize_datetime(dataframe):
                  'session_start', 'session_end', 'session_start1', 'session_end1', 'session_start2', 'session_end2']
     for time in time_list:
         try:
-            if dataframe[time].dtype != 'datetime64[ns]':
-                dataframe[time] = pd.to_datetime(dataframe[time],unit='s')
+            if dataframe.loc[:,(time)].dtype != 'datetime64[ns]':
+                dataframe.loc[:,(time)] = pd.to_datetime(dataframe.loc[:,(time)],unit='s')
         except:
             pass
 
@@ -126,10 +130,10 @@ def standardize_epoch(dataframe):
                  'session_start', 'session_end', 'session_start1', 'session_end1', 'session_start2', 'session_end2']
     for time in time_list:
         try:
-            if dataframe[time].dtype != 'int64':
-                dataframe[time] = dataframe[time].astype(np.int64)
-                if dataframe[time][0] > 10000000000:
-                    dataframe[time] = dataframe[time] // 10**9
+            if dataframe.loc[:,(time)].dtype != 'int64':
+                dataframe.loc[:,(time)] = dataframe.loc[:,(time)].astype(np.int64)
+                if dataframe.loc[:,(time)][0] > 10000000000:
+                    dataframe.loc[:,(time)] = dataframe.loc[:,(time)] // 10**9
         except:
             pass
 
@@ -204,7 +208,7 @@ def time_range_join_np(data1, data2, time_range=60):
 
     return df_range_join
 
-def time_range_join_sql(data1, data2, time_range=60):
+def time_range_join_sqlite(data1, data2, time_range=60):
     """Performs a range join based on indicated time plus/minus `time_range` buffer. This function uses the SQL API, which is
     much slower than the numpy based approach, but it more memory efficient so will work on larger datasets where the numpy 
     approach may quickly exceed available memory and fail
@@ -256,8 +260,129 @@ def time_range_join_sql(data1, data2, time_range=60):
 
     return df_range_join
 
+def time_range_join_spark_arrow(data1, data2, time_range=60):
+    """Performs a range join based on indicated time plus/minus `time_range` buffer. This function uses Spark
+    and Arrow to use memory for all storage purposes.
+
+    Parameters
+    ----------
+    data1 : pandas DataFrame
+        DataFrame of the first dataset
+
+    data2 : pandas DataFrame
+        DataFrame of the second dataset
+
+    time_range : int
+        Value for time buffer indicating range in join
+    
+    Returns
+    -------
+    df_range_join : pandas DataFrame
+        DataFrame with a range join of the two datasets based on time
+    """
+    # spark configuration
+    #findspark.init('/Users/pntz/anaconda3/pkgs/pyspark-2.4.3-py_0/site-packages/pyspark')
+    findspark.init('/root/miniconda/pkgs/pyspark-2.4.3-py_0/site-packages/pyspark')
+    conf = pyspark.SparkConf()
+    conf.set("spark.sql.execution.arrow.enabled","true")
+    conf.set("spark.network.timeout", "1000000000")
+    conf.set("spark.driver.memory", "1g")
+    sc = pyspark.SparkContext(appName="rangeJoin", conf=conf)
+    sql = pyspark.SQLContext(sc)
+
+    try:
+        data1['time'] = data1['timestamp1']
+    except:
+        data1['time'] = data1['session_start1']
+
+    try:
+        data2['time'] = data2['timestamp2']
+    except:
+        data2['time'] = data2['session_start2']
+
+    data2['time_high'] = data2['time'] + time_range
+    data2['time_low'] = data2['time'] - time_range
+    data2 = data2.drop(columns=['time'])
+
+    sparkdf1 = sql.createDataFrame(data1).repartition(1000)
+    sparkdf2 = sql.createDataFrame(data2).repartition(1000)
+
+    sparkdf_range_join = sparkdf1.join(sparkdf2, sparkdf1.time.between(sparkdf2.time_low, sparkdf2.time_high)).drop('time', 'time_high', 'time_low')
+    df_range_join = sparkdf_range_join.toPandas()
+
+    pickle.dump(df_range_join, open('./osm_multiplex/data/range_joined.pickle', 'wb'))
+
+    return df_range_join
+
+def time_range_join_spark_disk(data1, data2, time_range=2):
+    """Performs a range join based on indicated time plus/minus `time_range` buffer. This function uses Spark
+    and write to disk as an intermediary.
+
+    Parameters
+    ----------
+    data1 : pandas DataFrame
+        DataFrame of the first dataset
+
+    data2 : pandas DataFrame
+        DataFrame of the second dataset
+
+    time_range : int
+        Value for time buffer indicating range in join
+    
+    Returns
+    -------
+    df_range_join : pandas DataFrame
+        DataFrame with a range join of the two datasets based on time
+    """
+    # spark configuration
+    findspark.init('/Users/pntz/anaconda3/pkgs/pyspark-2.4.3-py_0/site-packages/pyspark')
+    # findspark.init('/root/miniconda/pkgs/pyspark-2.4.3-py_0/site-packages/pyspark')
+    conf = pyspark.SparkConf()
+    conf.set("spark.sql.execution.arrow.enabled","true")
+    conf.set("spark.network.timeout", "1000000000")
+    conf.set("spark.driver.cores", "4")
+    conf.set("spark.driver.memory", "7g")
+    conf.set("spark.driver.maxResultSize", "0")
+    # conf.set("spark.executor.cores", "2")
+    # conf.set("spark.executor.memory", "4g")
+    sc = pyspark.SparkContext(appName="rangeJoin", conf=conf)
+    sql = pyspark.SQLContext(sc)
+
+    try:
+        data1['time'] = data1['timestamp1']
+    except:
+        data1['time'] = data1['session_start1']
+
+    try:
+        data2['time'] = data2['timestamp2']
+    except:
+        data2['time'] = data2['session_start2']
+
+    data2['time_high'] = data2['time'] + time_range
+    data2['time_low'] = data2['time'] - time_range
+    data2 = data2.drop(columns=['time'])
+
+    data1.to_parquet('./osm_multiplex/data/data1.parquet')
+    data2.to_parquet('./osm_multiplex/data/data2.parquet')
+
+    sparkdf1 = sql.read.parquet('./osm_multiplex/data/data1.parquet').repartition(10)
+    sparkdf2 = sql.read.parquet('./osm_multiplex/data/data2.parquet').repartition(10)
+
+    sparkdf_range_join = sparkdf1.join(sparkdf2, sparkdf1.time.between(sparkdf2.time_low, sparkdf2.time_high)).drop('time', 'time_high', 'time_low', '__index_level_0__')
+
+    sparkdf_range_join.write.mode('overwrite').parquet('./osm_multiplex/data/sparkdf')
+
+    df_range_join = pd.read_parquet('./osm_multiplex/data/sparkdf/')
+    df_range_join = df_range_join[df_range_join.timestamp1 > 0]
+    df_range_join = df_range_join[df_range_join.timestamp2 > 0]
+
+    pickle.dump(df_range_join, open('./osm_multiplex/data/range_joined.pickle', 'wb'))
+
+    return df_range_join
+
 def time_range_join_cartesian(data1, data2, time_range=60):
-    """Performs a range join by perfoming a cartesian product and then filtering
+    """Performs a range join by perfoming a cartesian product and then filtering. Fails on larger
+    datasets due to quickly exceeding memory
 
     Parameters
     ----------
@@ -341,6 +466,50 @@ def time_range_join_cartesian(data1, data2, time_range=60):
 
 #     return df_range_join
 
+# def time_range_join_dask(data1, data2, time_range=60):
+#     """Performs a range join based on indicated time plus/minus `time_range` buffer. This function uses Dask.
+#     Dask currently does not support a range join, so this does not work.
+
+#     Parameters
+#     ----------
+#     data1 : pandas DataFrame
+#         DataFrame of the first dataset
+
+#     data2 : pandas DataFrame
+#         DataFrame of the second dataset
+
+#     time_range : int
+#         Value for time buffer indicating range in join
+    
+#     Returns
+#     -------
+#     df_range_join : pandas DataFrame
+#         DataFrame with a range join of the two datasets based on time
+#     """
+#     try:
+#         data1['time'] = data1['timestamp1']
+#     except:
+#         data1['time'] = data1['session_start1']
+
+#     try:
+#         data2['time'] = data2['timestamp2']
+#     except:
+#         data2['time'] = data2['session_start2']
+
+#     data2['time_high'] = data2['time'] + time_range
+#     data2['time_low'] = data2['time'] - time_range
+#     data2 = data2.drop(columns=['time'])
+
+#     daskdf1 = dd.from_pandas(data1, npartitions=100)
+#     daskdf2 = dd.from_pandas(data2, npartitions=100)
+
+#     daskdf_range_join = daskdf1.join(daskdf2, daskdf1.time.between(daskdf2.time_low, daskdf2.time_high)).drop('time', 'time_high', 'time_low')
+#     df_range_join = sparkdf_range_join.compute()
+
+#     pickle.dump(df_range_join, open('./osm_multiplex/data/range_joined.pickle', 'wb'))
+
+#     return df_range_join
+
 def haversine_dist_filter(dataframe, dist_max=100):
     """Returns dataframe with filtered for distance between recorded points using haversine distance
 
@@ -370,7 +539,7 @@ def haversine_dist_filter(dataframe, dist_max=100):
 
     return df_dist
 
-def pairwise_filter(data1, data2, session_limit=600, detection_distance=100, detection_time=60):
+def pairwise_filter(data1, data2, session_limit=600, detection_distance=50, detection_time=2):
     """Takes two datasets with identifiers to range join and filter to produce a list of probable joint identifiers
 
     Parameters
@@ -409,7 +578,7 @@ def pairwise_filter(data1, data2, session_limit=600, detection_distance=100, det
 
     # range join includes filtering for time proximity of recorded event
     print("Time-based range joining")
-    df_range_join = time_range_join_cartesian(data1_suffix, data2_suffix, time_range=detection_time)
+    df_range_join = time_range_join_spark_disk(data1_suffix, data2_suffix, time_range=detection_time)
 
     print("Filtering on distance")
     candidate_pairs = haversine_dist_filter(df_range_join, dist_max=detection_distance)
