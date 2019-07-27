@@ -5,6 +5,14 @@ matrix:
     - os: linux
       env: PYTHON="3.6"
 
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y openjdk-8-jdk
+  - sudo apt-get install -y g++
+  - sudo update-java-alternatives -s java-1.8.0-openjdk-amd64
+  - JAVA_HOME='/usr/lib/jvm/java-8-openjdk-amd64/jre/'
+sudo: required
+
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -23,13 +31,21 @@ install:
   - conda install python=${PYTHON}
   - conda install pytest>=3.2.0
   - conda install pytest-cov
+  - conda install arrow-cpp
   - conda install coveralls
+  - conda install dash
+  - conda install findspark
   - conda install keras
+  - conda install mkl-service
   - conda install networkx
   - conda install numpy
-  - conda install osmnx
   - conda install pandas
+  - conda install plotly
+  - conda install pyarrow
+  - conda install pyspark
   - conda install scikit-learn
+  - conda install sqlite
+  - conda install osmnx
   - conda info -a
   - conda list
 
