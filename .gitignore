@@ -105,10 +105,11 @@ venv.bak/
 .DS_Store
 
 # local data stores
-*/data/*
+osm_multiplex/data/
+osm_multiplex/networks/
+osm_multiplex/models
 *.npy
 *.h5
-*/networks/*
 *.json
 
 # vscode
