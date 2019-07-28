@@ -127,7 +127,7 @@ class anomalydetect(object):
     def construct_npdata(self, dataframe, testing=False):
         np_data_o1 = dataframe[['occupancy1']].values
         if testing == True:
-            np_data_o2 = np.concatenate((dataframe[['occupancy2']].values[:-5]*0.5, dataframe[['occupancy2']].values[-5:]*0.1))
+            np_data_o2 = np.concatenate((dataframe[['occupancy2']].values[:-5]*0.15, dataframe[['occupancy2']].values[-5:]*0.075))
         else:
             np_data_o2 = dataframe[['occupancy2']].values
         np_data_diff = np.abs(np_data_o1 - np_data_o2)
