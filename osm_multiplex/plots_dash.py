@@ -74,7 +74,7 @@ def update_location(location):
      Input('location_dropdown', 'value')]
 )
 def update_week(click, location):
-    if click==None:
+    if click is None:
         week = 0
     else:
         week = click['points'][0]['pointIndex']
