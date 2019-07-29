@@ -34,11 +34,11 @@ class LstmAutoEncoder(object):
         self.threshold = None
 
     @staticmethod
-    def create_model(time_window_size, metric):
+    def create_model(batch_size, time_window_size, metric):
         model = Sequential()
-        model.add(LSTM(units=256, input_shape=(time_window_size, 3), return_sequences=True))
-        model.add(LSTM(units=256, return_sequences=True))
-        model.add(LSTM(units=256, return_sequences=False))
+        model.add(LSTM(units=256, batch_input_shape=(batch_size, time_window_size, 3), return_sequences=True, stateful=True))
+        model.add(LSTM(units=256, return_sequences=True, stateful=True))
+        model.add(LSTM(units=256, return_sequences=False, stateful=True))
         model.add(Dense(units=time_window_size, activation='linear'))
 
         model.compile(optimizer='adam', loss='mean_squared_error', metrics=[metric])
@@ -51,7 +51,7 @@ class LstmAutoEncoder(object):
         self.metric = self.config['metric']
         self.time_window_size = self.config['time_window_size']
         self.threshold = self.config['threshold']
-        self.model = LstmAutoEncoder.create_model(self.time_window_size, self.metric)
+        self.model = LstmAutoEncoder.create_model(self.batch_size, self.time_window_size, self.metric)
         weight_file_path = LstmAutoEncoder.get_weight_file(model_dir_path)
         self.model.load_weights(weight_file_path)
 
@@ -68,9 +68,9 @@ class LstmAutoEncoder(object):
         return model_dir_path + '/' + LstmAutoEncoder.model_name + '-architecture.json'
 
     def fit(self, timeseries_dataset, model_dir_path, batch_size=None, epochs=None, validation_split=None, metric=None,
-            std_dev_threshold=None):
+            std_dev_threshold=None, shuffle=None):
         if batch_size is None:
-            batch_size = 8
+            batch_size = 1
         if epochs is None:
             epochs = 20
         if validation_split is None:
@@ -79,19 +79,22 @@ class LstmAutoEncoder(object):
             metric = 'mean_absolute_error'
         if std_dev_threshold is None:
             std_dev_threshold = 1.0
+        if shuffle is None:
+            shuffle = False
 
         self.metric = metric
         self.time_window_size = timeseries_dataset.shape[1]
+        self.batch_size = batch_size
 
         weight_file_path = LstmAutoEncoder.get_weight_file(model_dir_path=model_dir_path)
         architecture_file_path = LstmAutoEncoder.get_architecture_file(model_dir_path)
         checkpoint = ModelCheckpoint(weight_file_path)
-        self.model = LstmAutoEncoder.create_model(self.time_window_size, metric=self.metric)
+        self.model = LstmAutoEncoder.create_model(self.batch_size, self.time_window_size, self.metric)
         open(architecture_file_path, 'w').write(self.model.to_json())
         self.model.fit(x=timeseries_dataset, y=timeseries_dataset[:,:,2],
-                       batch_size=batch_size, epochs=epochs,
+                       batch_size=self.batch_size, epochs=epochs,
                        verbose=LstmAutoEncoder.VERBOSE, validation_split=validation_split,
-                       callbacks=[checkpoint])
+                       callbacks=[checkpoint], shuffle=shuffle)
         self.model.save_weights(weight_file_path)
 
         scores, _ = self.predict(timeseries_dataset)
@@ -107,7 +110,7 @@ class LstmAutoEncoder(object):
         np.save(config_file_path, self.config)
 
     def predict(self, timeseries_dataset):
-        target_timeseries_dataset = self.model.predict(x=timeseries_dataset)
+        target_timeseries_dataset = self.model.predict(x=timeseries_dataset, batch_size=self.batch_size)
         dist = np.linalg.norm(timeseries_dataset[:,:,2] - target_timeseries_dataset, axis=-1)
         return dist, target_timeseries_dataset
 
@@ -127,7 +130,7 @@ class anomalydetect(object):
     def construct_npdata(self, dataframe, testing=False):
         np_data_o1 = dataframe[['occupancy1']].values
         if testing == True:
-            np_data_o2 = np.concatenate((dataframe[['occupancy2']].values[:-5]*0.15, dataframe[['occupancy2']].values[-5:]*0.075))
+            np_data_o2 = np.concatenate((dataframe[['occupancy2']].values[:-5]*0.26, dataframe[['occupancy2']].values[-5:]*0.13))
         else:
             np_data_o2 = dataframe[['occupancy2']].values
         np_data_diff = np.abs(np_data_o1 - np_data_o2)
@@ -194,7 +197,7 @@ class anomalydetect(object):
             for idx, (is_anomaly, dist) in enumerate(anomaly_information):
                 reconstruction_error[str(years[idx]) + ', ' +str(weeks[idx])] = [is_anomaly, dist]
                 if is_anomaly == True:
-                    print(location + ' year ' + str(years[idx]) + ', week ' + str(weeks[idx]) + ' is anomalous')
+                    print(location + ', year ' + str(years[idx]) + ', week ' + str(weeks[idx]) + ' is anomalous')
             reconstruction_dict[location] = reconstruction_error
             collected_target[location] = np_data[:,:,2]
             predicted_target[location] = predicted_timeseries_dataset
@@ -253,8 +256,8 @@ class datasamples(object):
     def create_loc_dic(self, locations):
         with open(locations, mode='r') as f:
             reader = csv.reader(f)
-            loc_dic = {(float(row[1]), float(row[2])):row[0] for row in reader}
-        return loc_dic
+            loc_dict = {(float(row[1]), float(row[2])):row[0] for row in reader}
+        return loc_dict
 
     def group_dataframes(self, dataframe, locations):
         grouped_dataframes = {}
@@ -264,9 +267,9 @@ class datasamples(object):
         
         for name, group in dataframe.groupby(['lat', 'lon']):
             try:
-                grouped_dataframes['location ' + str(location_dict[name])] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
+                grouped_dataframes['Stop ' + location_dict[name]] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
             except:
-                grouped_dataframes['location ' + str(name)] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
+                grouped_dataframes['Stop ' + str(name)] = group.reset_index(level=['lat', 'lon']).drop(columns=['lat', 'lon'])
 
         return grouped_dataframes
 
